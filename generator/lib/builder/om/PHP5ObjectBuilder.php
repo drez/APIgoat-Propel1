@@ -268,9 +268,9 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             $this->addAttributes($script);
         }
 
-        if ($table->hasCrossForeignKeys()) {
+        /*if ($table->hasCrossForeignKeys()) {
             foreach ($table->getCrossFks() as $fkList) {
-                /* @var $refFK ForeignKey */
+                // @var $refFK ForeignKey
                 list($refFK, $crossFK) = $fkList;
                 $fkName = $this->getFKPhpNameAffix($crossFK, $plural = true);
 
@@ -278,7 +278,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
                     $this->addScheduledForDeletionAttribute($script, $fkName);
                 }
             }
-        }
+        }*/
 
         foreach ($table->getReferrers() as $refFK) {
             $fkName = $this->getRefFKPhpNameAffix($refFK, $plural = true);
@@ -311,7 +311,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
 
         if ($this->isAddGenericAccessors()) {
             $this->addGetByName($script);
-            $this->addGetByPosition($script);
+            //$this->addGetByPosition($script);
             $this->addToArray($script);
         }
 
@@ -334,8 +334,9 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
         }
 
         $this->addFKMethods($script);
+        #FRED#
         $this->addRefFKMethods($script);
-        $this->addCrossFKMethods($script);
+        //$this->addCrossFKMethods($script);
         $this->addClear($script);
         $this->addClearAllReferences($script);
 
@@ -414,10 +415,10 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
         }
 
         // many-to-many relationships
-        foreach ($table->getCrossFks() as $fkList) {
+        /*foreach ($table->getCrossFks() as $fkList) {
             $crossFK = $fkList[1];
             $this->addCrossFKAttributes($script, $crossFK);
-        }
+        }*/
 
         $this->addAlreadyInSaveAttribute($script);
         $this->addAlreadyInValidationAttribute($script);
@@ -3637,10 +3638,8 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             }
 
             if ($doJoinGet) {
-                $script .= "
 
-    /**
-     * If this collection has already been initialized with
+                /*"* If this collection has already been initialized with
      * an identical criteria, it returns the collection.
      * Otherwise if this " . $table->getPhpName() . " is new, it will return
      * an empty collection; or if this " . $table->getPhpName() . " has previously
@@ -3648,7 +3647,11 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      *
      * This method is protected by default in order to keep the public
      * api reasonable.  You can provide public methods for those you
-     * actually need in " . $table->getPhpName() . ".
+     * actually need in " . $table->getPhpName() . "."*/
+                $script .= "
+
+    /**
+     
      *
      * @param Criteria \$criteria optional Criteria object to narrow the query
      * @param PropelPDO \$con optional connection object
@@ -4365,11 +4368,11 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             $this->declareClassFromBuilder($this->getNewStubObjectBuilder($crossFK->getForeignTable()));
             $this->declareClassFromBuilder($this->getNewStubQueryBuilder($crossFK->getForeignTable()));
 
-            $this->addCrossFKClear($script, $crossFK);
+            //$this->addCrossFKClear($script, $crossFK);
             $this->addCrossFKInit($script, $crossFK);
             $this->addCrossFKGet($script, $refFK, $crossFK);
             $this->addCrossFKSet($script, $refFK, $crossFK);
-            $this->addCrossFKCount($script, $refFK, $crossFK);
+            //$this->addCrossFKCount($script, $refFK, $crossFK);
             $this->addCrossFKAdd($script, $refFK, $crossFK);
             $this->addCrossFKDoAdd($script, $refFK, $crossFK);
             $this->addCrossFKRemove($script, $refFK, $crossFK);
