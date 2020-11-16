@@ -334,7 +334,6 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
         }
 
         $this->addFKMethods($script);
-        #FRED#
         $this->addRefFKMethods($script);
         //$this->addCrossFKMethods($script);
         $this->addClear($script);
@@ -1988,10 +1987,10 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
         // checking in mutators.
         if ($col->isPhpPrimitiveType()) {
             if ($col->isTextType()) {
-              $script .= "
+                $script .= "
         if (\$v !== null) {";
             } else {
-              $script .= "
+                $script .= "
         if (\$v !== null && is_numeric(\$v)) {";
             }
 
