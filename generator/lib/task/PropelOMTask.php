@@ -122,7 +122,7 @@ class PropelOMTask extends AbstractPropelDataModelTask
 
         $dataModels = $this->getDataModels();
         $this->log('Generating PHP files...');
-
+        $builderRunOnce = [];
         foreach ($dataModels as $dataModel) {
             $this->log("Datamodel: " . $dataModel->getName(), Project::MSG_VERBOSE);
 
@@ -132,10 +132,17 @@ class PropelOMTask extends AbstractPropelDataModelTask
                     $database->getPlatform()->setIdentifierQuoting(false);
                 }
 
+                #thread here
+
                 $this->log(" - Database: " . $database->getName(), Project::MSG_VERBOSE);
+                //include '/var/www/Propel/generator/lib/builder/om/BuilderThread.php';
 
                 foreach ($database->getTables() as $table) {
 
+                    /* $pid = pcntl_fork();
+                    if ($pid == -1) {
+                        die('could not fork');
+                    } elseif ($pid == 0) {*/
                     if (!$table->isForReferenceOnly()) {
 
                         $nbWrittenFiles = 0;
@@ -234,10 +241,22 @@ class PropelOMTask extends AbstractPropelDataModelTask
                         // Create classes added by behaviors
                         // ----------------------------------
                         if ($table->hasAdditionalBuilders()) {
+
                             foreach ($table->getAdditionalBuilders() as $builderClass) {
-                                $builder = new $builderClass($table);
-                                $builder->setGeneratorConfig($generatorConfig);
-                                $nbWrittenFiles += $this->build($builder, isset($builder->overwrite) ? $builder->overwrite : true);
+                                if (!in_array($builderClass, $builderRunOnce)) {
+                                    $builder = new $builderClass($table);
+                                    if ($builder->runOnce) {
+                                        $builderRunOnce[] = $builderClass;
+                                    }
+                                    /*$pid = pcntl_fork();
+                                    if ($pid == -1) {
+                                        die('could not fork');
+                                    } elseif ($pid == 0) {*/
+                                    $builder->setGeneratorConfig($generatorConfig);
+                                    $nbWrittenFiles += $this->build($builder, isset($builder->overwrite) ? $builder->overwrite : true);
+                                    /*   exit();
+                                    }*/
+                                }
                             }
                         }
 
@@ -246,12 +265,20 @@ class PropelOMTask extends AbstractPropelDataModelTask
                             $this->log("\t\t(no change)", Project::MSG_VERBOSE);
                         }
                     } // if !$table->isForReferenceOnly()
-
+                    //exit();
+                    /*}*/
                 } // foreach table
 
+                $i++;
+
+                while (pcntl_waitpid(0, $status) != -1) {
+                    $status = pcntl_wexitstatus($status);
+                    //echo "Child $status completed\n";
+                }
             } // foreach database
 
         } // foreach dataModel
+
         if ($totalNbFiles) {
             $this->log(sprintf("Object model generation complete - %d files written", $totalNbFiles));
         } else {
