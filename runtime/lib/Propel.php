@@ -841,6 +841,11 @@ class Propel
         self::$baseDir = dirname(__FILE__) . '/';
     }
 
+    public static function getBaseDir()
+    {
+        return self::$baseDir;
+    }
+
     /**
      * Include once a file specified in DOT notation and return unqualified classname.
      *
