@@ -192,7 +192,7 @@ class Criteria implements IteratorAggregate
      *
      * @var        array
      */
-    protected $joins = array();
+    public $joins = array();
 
     /**
      * @var        Criteria[]
