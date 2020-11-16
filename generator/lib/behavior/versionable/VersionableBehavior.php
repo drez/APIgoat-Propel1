@@ -208,8 +208,10 @@ class VersionableBehavior extends Behavior
         $versionableFKs = array();
         if ($fks = $this->getTable()->getForeignKeys()) {
             foreach ($fks as $fk) {
-                if ($fk->getForeignTable()->hasBehavior($this->getName()) && !$fk->isComposite()) {
-                    $versionableFKs[] = $fk;
+                if($fk->getForeignTable()){
+                    if ($fk->getForeignTable()->hasBehavior($this->getName()) && !$fk->isComposite()) {
+                        $versionableFKs[] = $fk;
+                    }
                 }
             }
         }
