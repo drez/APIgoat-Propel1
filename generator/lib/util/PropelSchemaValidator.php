@@ -78,10 +78,10 @@ class PropelSchemaValidator
             $fkTables = array();
             foreach ($table->getForeignKeys() as $fk) {
                 $foreignTableName = $fk->getForeignTableName();
-                if (isset($fkTables[$foreignTableName])) {
+                /*if (isset($fkTables[$foreignTableName])) {
                     $this->errors[] = sprintf('Table "%s" implements an equal nest relationship for table "%s". This feature is not supported', $table->getName(), $foreignTableName);
                     break;
-                }
+                }*/
                 $fkTables[$foreignTableName] = true;
             }
         }
