@@ -2044,7 +2044,7 @@ class ModelCriteria extends Criteria
      *
      * @throws PropelException
      */
-    protected function getColumnFromName($phpName, $failSilently = true)
+    public function getColumnFromName($phpName, $failSilently = true)
     {
         if (strpos($phpName, '.') === false) {
             $prefix = $this->getModelAliasOrName();
