@@ -8,6 +8,8 @@
  * @license    MIT License
  */
 
+use GuzzleHttp\Promise\Each;
+
 require_once dirname(__FILE__) . '/XMLElement.php';
 require_once dirname(__FILE__) . '/../exception/EngineException.php';
 require_once dirname(__FILE__) . '/PropelTypes.php';
@@ -109,7 +111,11 @@ class Validator extends XMLElement
      */
     public function getColumnName()
     {
-        return $this->column->getName();
+        if (is_object($this->column)) {
+            return $this->column->getName();
+        } else {
+            throw new Exception("[Error]The column '" . $this->table->commonName . "." . $this->attributes['column'] . "' doesn't exists in 'validator'");
+        }
     }
 
     /**
@@ -121,7 +127,11 @@ class Validator extends XMLElement
      */
     public function setColumn(Column $column)
     {
-        $this->column = $column;
+        if (is_object($column)) {
+            $this->column = $column;
+        } else {
+            throw new Exception("[Error]The validator column doesn't exists");
+        }
     }
 
     /**

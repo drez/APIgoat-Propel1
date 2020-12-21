@@ -25,7 +25,7 @@ abstract class XMLElement
      *
      * @var array
      */
-    protected $attributes = array();
+    public $attributes = array();
 
     /**
      * Any associated vendor-specific information objects.
