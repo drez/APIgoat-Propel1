@@ -95,7 +95,9 @@ class PHP5ObjectBuilder extends ObjectBuilder
 
         $intersect = array_intersect($colPhpNames, $fkPhpNames);
         if (!empty($intersect)) {
-            throw new EngineException("One or more of your column names for [" . $table->getName() . "] table conflict with foreign key names (" . implode(", ", $intersect) . ")");
+            throw new EngineException("One or more of your column names for [" . $table->getName() . "]"
+            ." table conflict with foreign key names (" . implode(", ", $intersect) . "). The foreign table name is use internally so the table name can't be used"
+            ." as the column name.");
         }
 
         // Check foreign keys to see if there are any foreign keys that
