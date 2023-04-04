@@ -844,6 +844,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
 
         $script .= "
     /**
+     * @Field()
      * Get the [optionally formatted] temporal [$clo] column value.
      * " . $col->getDescription();
         if (!$useDateTime) {
@@ -1142,6 +1143,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
         $clo = strtolower($col->getName());
         $script .= "
     /**
+     * @Field()
      * Get the [$clo] column value.
      * " . $col->getDescription();
         if ($col->isLazyLoad()) {
@@ -1255,6 +1257,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
 
         $script .= "
     /**
+     * @Field()
      * Get the [$clo] column value.
      * " . $col->getDescription();
         if ($col->isLazyLoad()) {

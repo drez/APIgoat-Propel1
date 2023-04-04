@@ -84,6 +84,7 @@ require '" . $requiredClassFilePath . "';
             $script .= "
 
 /**
+ * @Type()
  * Skeleton subclass for representing a row from the '$tableName' table.
  *
  * $tableDesc
