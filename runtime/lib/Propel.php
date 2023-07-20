@@ -161,22 +161,22 @@ class Propel
      */
     protected static $autoloadMap = array(
 
-        'DBAdapter'           => 'adapter/DBAdapter.php',
-        'DBMSSQL'             => 'adapter/DBMSSQL.php',
-        'MssqlPropelPDO'      => 'adapter/MSSQL/MssqlPropelPDO.php',
-        'MssqlDebugPDO'       => 'adapter/MSSQL/MssqlDebugPDO.php',
-        'MssqlDateTime'       => 'adapter/MSSQL/MssqlDateTime.class.php',
-        'DBMySQL'             => 'adapter/DBMySQL.php',
-        'DBMySQLi'            => 'adapter/DBMySQLi.php',
-        'DBNone'              => 'adapter/DBNone.php',
-        'DBOracle'            => 'adapter/DBOracle.php',
-        'DBPostgres'          => 'adapter/DBPostgres.php',
-        'DBSQLite'            => 'adapter/DBSQLite.php',
-        'DBSybase'            => 'adapter/DBSybase.php',
-        'DBSQLSRV'            => 'adapter/DBSQLSRV.php',
+        'DBAdapter' => 'adapter/DBAdapter.php',
+        'DBMSSQL' => 'adapter/DBMSSQL.php',
+        'MssqlPropelPDO' => 'adapter/MSSQL/MssqlPropelPDO.php',
+        'MssqlDebugPDO' => 'adapter/MSSQL/MssqlDebugPDO.php',
+        'MssqlDateTime' => 'adapter/MSSQL/MssqlDateTime.class.php',
+        'DBMySQL' => 'adapter/DBMySQL.php',
+        'DBMySQLi' => 'adapter/DBMySQLi.php',
+        'DBNone' => 'adapter/DBNone.php',
+        'DBOracle' => 'adapter/DBOracle.php',
+        'DBPostgres' => 'adapter/DBPostgres.php',
+        'DBSQLite' => 'adapter/DBSQLite.php',
+        'DBSybase' => 'adapter/DBSybase.php',
+        'DBSQLSRV' => 'adapter/DBSQLSRV.php',
 
         'PropelArrayCollection' => 'collection/PropelArrayCollection.php',
-        'PropelCollection'    => 'collection/PropelCollection.php',
+        'PropelCollection' => 'collection/PropelCollection.php',
         'PropelObjectCollection' => 'collection/PropelObjectCollection.php',
         'PropelOnDemandCollection' => 'collection/PropelOnDemandCollection.php',
         'PropelOnDemandIterator' => 'collection/PropelOnDemandIterator.php',
@@ -184,73 +184,73 @@ class Propel
         'PropelConfiguration' => 'config/PropelConfiguration.php',
         'PropelConfigurationIterator' => 'config/PropelConfigurationIterator.php',
 
-        'PropelPDO'           => 'connection/PropelPDO.php',
-        'DebugPDO'            => 'connection/DebugPDO.php',
-        'DebugPDOStatement'   => 'connection/DebugPDOStatement.php',
+        'PropelPDO' => 'connection/PropelPDO.php',
+        'DebugPDO' => 'connection/DebugPDO.php',
+        'DebugPDOStatement' => 'connection/DebugPDOStatement.php',
 
-        'PropelException'     => 'exception/PropelException.php',
+        'PropelException' => 'exception/PropelException.php',
 
-        'ModelWith'           => 'formatter/ModelWith.php',
+        'ModelWith' => 'formatter/ModelWith.php',
         'PropelArrayFormatter' => 'formatter/PropelArrayFormatter.php',
-        'PropelFormatter'     => 'formatter/PropelFormatter.php',
+        'PropelFormatter' => 'formatter/PropelFormatter.php',
         'PropelObjectFormatter' => 'formatter/PropelObjectFormatter.php',
         'PropelOnDemandFormatter' => 'formatter/PropelOnDemandFormatter.php',
         'PropelStatementFormatter' => 'formatter/PropelStatementFormatter.php',
         'PropelSimpleArrayFormatter' => 'formatter/PropelSimpleArrayFormatter.php',
 
-        'BasicLogger'         => 'logger/BasicLogger.php',
-        'MojaviLogAdapter'    => 'logger/MojaviLogAdapter.php',
+        'BasicLogger' => 'logger/BasicLogger.php',
+        'MojaviLogAdapter' => 'logger/MojaviLogAdapter.php',
 
-        'ColumnMap'           => 'map/ColumnMap.php',
-        'DatabaseMap'         => 'map/DatabaseMap.php',
-        'TableMap'            => 'map/TableMap.php',
-        'RelationMap'         => 'map/RelationMap.php',
-        'ValidatorMap'        => 'map/ValidatorMap.php',
+        'ColumnMap' => 'map/ColumnMap.php',
+        'DatabaseMap' => 'map/DatabaseMap.php',
+        'TableMap' => 'map/TableMap.php',
+        'RelationMap' => 'map/RelationMap.php',
+        'ValidatorMap' => 'map/ValidatorMap.php',
 
-        'BaseObject'          => 'om/BaseObject.php',
-        'NodeObject'          => 'om/NodeObject.php',
-        'Persistent'          => 'om/Persistent.php',
+        'BaseObject' => 'om/BaseObject.php',
+        'NodeObject' => 'om/NodeObject.php',
+        'Persistent' => 'om/Persistent.php',
         'PreOrderNodeIterator' => 'om/PreOrderNodeIterator.php',
         'NestedSetPreOrderNodeIterator' => 'om/NestedSetPreOrderNodeIterator.php',
         'NestedSetRecursiveIterator' => 'om/NestedSetRecursiveIterator.php',
 
-        'PropelCSVParser'     => 'parser/PropelCSVParser.php',
-        'PropelJSONParser'    => 'parser/PropelJSONParser.php',
-        'PropelParser'        => 'parser/PropelParser.php',
-        'PropelXMLParser'     => 'parser/PropelXMLParser.php',
-        'PropelYAMLParser'    => 'parser/PropelYAMLParser.php',
+        'PropelCSVParser' => 'parser/PropelCSVParser.php',
+        'PropelJSONParser' => 'parser/PropelJSONParser.php',
+        'PropelParser' => 'parser/PropelParser.php',
+        'PropelXMLParser' => 'parser/PropelXMLParser.php',
+        'PropelYAMLParser' => 'parser/PropelYAMLParser.php',
 
-        'Criteria'            => 'query/Criteria.php',
-        'Criterion'           => 'query/Criterion.php',
-        'CriterionIterator'   => 'query/CriterionIterator.php',
-        'Join'                => 'query/Join.php',
-        'ModelCriteria'       => 'query/ModelCriteria.php',
-        'ModelCriterion'      => 'query/ModelCriterion.php',
-        'ModelJoin'           => 'query/ModelJoin.php',
-        'PropelQuery'         => 'query/PropelQuery.php',
+        'Criteria' => 'query/Criteria.php',
+        'Criterion' => 'query/Criterion.php',
+        'CriterionIterator' => 'query/CriterionIterator.php',
+        'Join' => 'query/Join.php',
+        'ModelCriteria' => 'query/ModelCriteria.php',
+        'ModelCriterion' => 'query/ModelCriterion.php',
+        'ModelJoin' => 'query/ModelJoin.php',
+        'PropelQuery' => 'query/PropelQuery.php',
 
-        'BasePeer'            => 'util/BasePeer.php',
-        'NodePeer'            => 'util/NodePeer.php',
-        'PeerInfo'            => 'util/PeerInfo.php',
-        'PropelAutoloader'    => 'util/PropelAutoloader.php',
-        'PropelColumnTypes'   => 'util/PropelColumnTypes.php',
+        'BasePeer' => 'util/BasePeer.php',
+        'NodePeer' => 'util/NodePeer.php',
+        'PeerInfo' => 'util/PeerInfo.php',
+        'PropelAutoloader' => 'util/PropelAutoloader.php',
+        'PropelColumnTypes' => 'util/PropelColumnTypes.php',
         'PropelConditionalProxy' => 'util/PropelConditionalProxy.php',
-        'PropelModelPager'    => 'util/PropelModelPager.php',
-        'PropelPager'         => 'util/PropelPager.php',
-        'PropelDateTime'      => 'util/PropelDateTime.php',
+        'PropelModelPager' => 'util/PropelModelPager.php',
+        'PropelPager' => 'util/PropelPager.php',
+        'PropelDateTime' => 'util/PropelDateTime.php',
 
-        'BasicValidator'      => 'validator/BasicValidator.php',
-        'MatchValidator'      => 'validator/MatchValidator.php',
-        'MaxLengthValidator'  => 'validator/MaxLengthValidator.php',
-        'MaxValueValidator'   => 'validator/MaxValueValidator.php',
-        'MinLengthValidator'  => 'validator/MinLengthValidator.php',
-        'MinValueValidator'   => 'validator/MinValueValidator.php',
-        'NotMatchValidator'   => 'validator/NotMatchValidator.php',
-        'RequiredValidator'   => 'validator/RequiredValidator.php',
-        'TypeValidator'       => 'validator/TypeValidator.php',
-        'UniqueValidator'     => 'validator/UniqueValidator.php',
+        'BasicValidator' => 'validator/BasicValidator.php',
+        'MatchValidator' => 'validator/MatchValidator.php',
+        'MaxLengthValidator' => 'validator/MaxLengthValidator.php',
+        'MaxValueValidator' => 'validator/MaxValueValidator.php',
+        'MinLengthValidator' => 'validator/MinLengthValidator.php',
+        'MinValueValidator' => 'validator/MinValueValidator.php',
+        'NotMatchValidator' => 'validator/NotMatchValidator.php',
+        'RequiredValidator' => 'validator/RequiredValidator.php',
+        'TypeValidator' => 'validator/TypeValidator.php',
+        'UniqueValidator' => 'validator/UniqueValidator.php',
         'ValidValuesValidator' => 'validator/ValidValuesValidator.php',
-        'ValidationFailed'    => 'validator/ValidationFailed.php',
+        'ValidationFailed' => 'validator/ValidationFailed.php',
     );
 
     /**
@@ -269,14 +269,14 @@ class Propel
 
         // check whether the generated model has the same version as the runtime, see gh-#577
         // we need to check for existance first, because tasks which rely on the runtime.xml conf will not provide a generator_version
-        if (isset(self::$configuration['generator_version']) && self::$configuration['generator_version'] != self::VERSION) {
-            $warning = "Version mismatch: The generated model was build using propel '" . self::$configuration['generator_version'] . "' while the current runtime is at version '" . self::VERSION . "'";
-            if (self::$logger) {
-                self::$logger->warning($warning);
-            } else {
-                trigger_error($warning, E_USER_WARNING);
-            }
-        }*/
+        /* if (isset(self::$configuration['generator_version']) && self::$configuration['generator_version'] != self::VERSION) {
+             $warning = "Version mismatch: The generated model was build using propel '" . self::$configuration['generator_version'] . "' while the current runtime is at version '" . self::VERSION . "'";
+             if (self::$logger) {
+                 self::$logger->warning($warning);
+             } else {
+                 trigger_error($warning, E_USER_WARNING);
+             }
+         }*/
 
         // reset the connection map (this should enable runtime changes of connection params)
         self::$connectionMap = array();
