@@ -44,7 +44,6 @@ class Column extends XMLElement
     private $namePrefix;
     private $accessorVisibility;
     private $mutatorVisibility;
-    public $isI18n;
 
     /**
      * The name to use for the Peer constant that identifies this column.

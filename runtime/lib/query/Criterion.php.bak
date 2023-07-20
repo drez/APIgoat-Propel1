@@ -316,8 +316,8 @@ class Criterion
                 break;
             case Criteria::LIKE:
             case Criteria::NOT_LIKE:
-            case Criteria::ILIKE:
-            case Criteria::NOT_ILIKE:
+            //case Criteria::ILIKE:
+            //case Criteria::NOT_ILIKE:
                 // table.column LIKE ? or table.column NOT LIKE ?  (or ILIKE for Postgres)
                 $this->appendLikeToPs($sb, $params);
                 break;

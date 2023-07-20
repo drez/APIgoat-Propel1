@@ -402,7 +402,6 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
         $table = $this->getTable();
         $script .= "
     /**
-     * @Query()
      * Find object by primary key.
      * Propel uses the instance pool to skip the database if the object exists.
      * Go fast if the query is untouched.
@@ -442,7 +441,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
         if ($table->hasCompositePrimaryKey()) {
             $pks = array();
             foreach ($table->getPrimaryKey() as $index => $column) {
-                $pks[] = "\$key[$index]";
+                $pks [] = "\$key[$index]";
             }
         } else {
             $pks = '$key';
@@ -507,21 +506,21 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
         $selectColumns = array();
         foreach ($table->getColumns() as $column) {
             if (!$column->isLazyLoad()) {
-                $selectColumns[] = $platform->quoteIdentifier($column->getName());
+                $selectColumns [] = $platform->quoteIdentifier($column->getName());
             }
         }
         $conditions = array();
         foreach ($table->getPrimaryKey() as $index => $column) {
-            $conditions[] = sprintf('%s = :p%d', $platform->quoteIdentifier($column->getName()), $index);
+            $conditions [] = sprintf('%s = :p%d', $platform->quoteIdentifier($column->getName()), $index);
         }
         $query = sprintf('SELECT %s FROM %s WHERE %s', implode(', ', $selectColumns), $platform->quoteIdentifier($table->getName()), implode(' AND ', $conditions));
         $pks = array();
         if ($table->hasCompositePrimaryKey()) {
             foreach ($table->getPrimaryKey() as $index => $column) {
-                $pks[] = "\$key[$index]";
+                $pks [] = "\$key[$index]";
             }
         } else {
-            $pks[] = "\$key";
+            $pks [] = "\$key";
         }
         $pkHashFromRow = $this->getPeerBuilder()->getInstancePoolKeySnippet($pks);
         $script .= "
@@ -590,7 +589,6 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
         $this->declareClasses('PropelPDO');
         $script .= "
     /**
-     * @Query()
      * Find object by primary key.
      *
      * @param     mixed \$key Primary key to use for the query
@@ -624,9 +622,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
         $count = count($pks);
         $class = $this->getStubObjectBuilder()->getClassname();
         $script .= "
-
     /**
-     * @Query()
      * Find objects by primary key
      * <code>";
         if ($count === 1) {

@@ -63,7 +63,6 @@ require '" . $requiredClassFilePath . "';
             $script .= "
 
 /**
- * @Query
  * Skeleton subclass for performing query and update operations on the '$tableName' table.
  *
  * $tableDesc
