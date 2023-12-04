@@ -20,19 +20,19 @@
 class PropelModelPager implements IteratorAggregate, Countable
 {
     protected
-        $query = null,
-        $page = 1,
-        $maxPerPage = 10,
-        $lastPage = 1,
-        $nbResults = 0,
-        $objects = null,
-        $parameters = array(),
-        $currentMaxLink = 1,
-        $parameterHolder = null,
-        $maxRecordLimit = false,
-        $results = null,
-        $resultsCounter	= 0,
-        $con = null;
+    $query = null,
+    $page = 1,
+    $maxPerPage = 10,
+    $lastPage = 1,
+    $nbResults = 0,
+    $objects = null,
+    $parameters = array(),
+    $currentMaxLink = 1,
+    $parameterHolder = null,
+    $maxRecordLimit = false,
+    $results = null,
+    $resultsCounter = 0,
+    $con = null;
 
     public function __construct(ModelCriteria $query, $maxPerPage = 10)
     {
