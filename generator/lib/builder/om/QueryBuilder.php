@@ -1291,13 +1291,13 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
      *
      * @return   $queryClass The current query, for fluid interface
      */
-    public function filterByRel{$relName}($objectName, \$comparison = Criteria::EQUAL)
+    /*public function filterByRel{$relName}($objectName, \$comparison = Criteria::EQUAL)
     {
         return \$this
             ->use{$relationName}Query()
             ->filterBy{$relName}($objectName, \$comparison)
             ->endUse();
-    }
+    }*/
 ";
     }
 

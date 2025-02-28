@@ -125,7 +125,7 @@ class PropelOMTask extends AbstractPropelDataModelTask
         $builderRunOnce = [];
         foreach ($dataModels as $dataModel) {
             $this->log("Datamodel: " . $dataModel->getName(), Project::MSG_VERBOSE);
-
+            $i = 0;
             foreach ($dataModel->getDatabases() as $database) {
 
                 if ($this->getGeneratorConfig()->getBuildProperty('disableIdentifierQuoting')) {
