@@ -301,7 +301,15 @@ abstract class " . $this->getClassname() . $extendingPeerClass . "
 
     protected function getEnumValueConstant($value)
     {
-        return strtoupper(preg_replace('/[^a-zA-Z0-9_\x7f-\xff]/', '_', $value));
+        $constant = strtoupper(preg_replace('/[^a-zA-Z0-9_\x7f-\xff]/', '_', $value));
+        // Values made only of symbols (e.g. '$', '%') all collapse to '_',
+        // which would emit duplicate class constants. Use character codes
+        // instead so every value gets a distinct, deterministic name.
+        if (trim($constant, '_') === '') {
+            $constant = 'CHR_' . implode('_', array_map('ord', str_split($value)));
+        }
+
+        return $constant;
     }
 
     protected function addFieldNamesAttribute(&$script)
