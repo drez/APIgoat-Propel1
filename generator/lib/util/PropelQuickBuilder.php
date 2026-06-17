@@ -85,7 +85,7 @@ class PropelQuickBuilder
         return $builder->build($dsn, $user, $pass, $adapter);
     }
 
-    public function build($dsn = null, $user = null, $pass = null, $adapter = null, array $classTargets = null)
+    public function build($dsn = null, $user = null, $pass = null, $adapter = null, ?array $classTargets = null)
     {
         if (null === $dsn) {
             $dsn = 'sqlite::memory:';
@@ -146,12 +146,12 @@ class PropelQuickBuilder
         return $this->getPlatform()->getAddTablesDDL($this->getDatabase());
     }
 
-    public function buildClasses(array $classTargets = null)
+    public function buildClasses(?array $classTargets = null)
     {
         eval($this->getClasses($classTargets));
     }
 
-    public function getClasses(array $classTargets = null)
+    public function getClasses(?array $classTargets = null)
     {
         $script = '';
         foreach ($this->getDatabase()->getTables() as $table) {
@@ -161,7 +161,7 @@ class PropelQuickBuilder
         return $script;
     }
 
-    public function getClassesForTable(Table $table, array $classTargets = null)
+    public function getClassesForTable(Table $table, ?array $classTargets = null)
     {
         if (null === $classTargets) {
             $classTargets = $this->classTargets;

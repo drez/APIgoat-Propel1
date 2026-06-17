@@ -161,7 +161,7 @@ class GeneratorConfig implements GeneratorConfigInterface
      * @return Platform
      * @throws BuildException
      */
-    public function getConfiguredPlatform(PDO $con = null, $database = null)
+    public function getConfiguredPlatform(?PDO $con = null, $database = null)
     {
         $buildConnection = $this->getBuildConnection($database);
         //First try to load platform from the user provided build properties
@@ -198,7 +198,7 @@ class GeneratorConfig implements GeneratorConfigInterface
      * @return SchemaParser
      * @throws BuildException
      */
-    public function getConfiguredSchemaParser(PDO $con = null)
+    public function getConfiguredSchemaParser(?PDO $con = null)
     {
         $clazz = $this->getClassname("reverseParserClass");
         $parser = new $clazz();

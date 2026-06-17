@@ -63,5 +63,5 @@ interface SchemaParser
      *
      * @return int number of generated tables
      */
-    public function parse(Database $database, Task $task = null);
+    public function parse(Database $database, ?Task $task = null);
 }

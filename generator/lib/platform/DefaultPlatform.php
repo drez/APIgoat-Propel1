@@ -46,7 +46,7 @@ class DefaultPlatform implements PropelPlatformInterface
      *
      * @param PDO $con Optional database connection to use in this platform.
      */
-    public function __construct(PDO $con = null)
+    public function __construct(?PDO $con = null)
     {
         if ($con) {
             $this->setConnection($con);
@@ -59,7 +59,7 @@ class DefaultPlatform implements PropelPlatformInterface
      *
      * @param PDO $con Database connection to use in this platform.
      */
-    public function setConnection(PDO $con = null)
+    public function setConnection(?PDO $con = null)
     {
         $this->con = $con;
     }
