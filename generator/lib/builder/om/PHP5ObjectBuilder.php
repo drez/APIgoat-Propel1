@@ -1214,7 +1214,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      */
     $visibility function has$singularPhpName(\$value";
         if ($col->isLazyLoad()) {
-            $script .= ", PropelPDO \$con = null";
+            $script .= ", ?PropelPDO \$con = null";
         }
         $script .= ")
     {
@@ -1285,7 +1285,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
         $script .= "
     " . $visibility . " function get$cfc(";
         if ($col->isLazyLoad()) {
-            $script .= "PropelPDO \$con = null";
+            $script .= "?PropelPDO \$con = null";
         }
         $script .= ")
     {";
@@ -1381,7 +1381,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
     {
         $cfc = $col->getPhpName();
         $script .= "
-    protected function load$cfc(PropelPDO \$con = null)
+    protected function load$cfc(?PropelPDO \$con = null)
     {";
     }
 
@@ -1816,7 +1816,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      */
     $visibility function add$singularPhpName(\$value";
         if ($col->isLazyLoad()) {
-            $script .= ", PropelPDO \$con = null";
+            $script .= ", ?PropelPDO \$con = null";
         }
         $script .= ")
     {
@@ -1859,7 +1859,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      */
     $visibility function remove$singularPhpName(\$value";
         if ($col->isLazyLoad()) {
-            $script .= ", PropelPDO \$con = null";
+            $script .= ", ?PropelPDO \$con = null";
         }
         // we want to reindex the array, so array_ functions are not the best choice
         $script .= ")
@@ -2829,7 +2829,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
     protected function addDeleteOpen(&$script)
     {
         $script .= "
-    public function delete(PropelPDO \$con = null)
+    public function delete(?PropelPDO \$con = null)
     {";
     }
 
@@ -2924,7 +2924,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      * @return void
      * @throws PropelException - if this object is deleted, unsaved or doesn't have pk match in db
      */
-    public function reload(\$deep = false, PropelPDO \$con = null)
+    public function reload(\$deep = false, ?PropelPDO \$con = null)
     {
         if (\$this->isDeleted()) {
             throw new PropelException(\"Cannot reload a deleted object.\");
@@ -3399,7 +3399,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      * @return "               . $this->getObjectClassname() . " The current object (for fluent API support)
      * @throws PropelException
      */
-    public function set" . $this->getFKPhpNameAffix($fk, $plural = false) . "($className \$v = null)
+    public function set" . $this->getFKPhpNameAffix($fk, $plural = false) . "(?$className \$v = null)
     {";
         foreach ($fk->getLocalColumns() as $columnName) {
             $column = $table->getColumn($columnName);
@@ -3506,7 +3506,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      * @return $className The associated $className object.
      * @throws PropelException
      */
-    public function get" . $this->getFKPhpNameAffix($fk, $plural = false) . "(PropelPDO \$con = null, \$doQuery = true)
+    public function get" . $this->getFKPhpNameAffix($fk, $plural = false) . "(?PropelPDO \$con = null, \$doQuery = true)
     {";
         $script .= "
         if (\$this->$varName === null && ($conditional) && \$doQuery) {";
@@ -3938,7 +3938,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      * @return int             Count of related $className objects.
      * @throws PropelException
      */
-    public function count$relCol(Criteria \$criteria = null, \$distinct = false, PropelPDO \$con = null)
+    public function count$relCol(?Criteria \$criteria = null, \$distinct = false, ?PropelPDO \$con = null)
     {
         \$partial = \$this->{$collName}Partial && !\$this->isNew();
         if (null === \$this->$collName || null !== \$criteria || \$partial) {
@@ -3998,7 +3998,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      * @return PropelObjectCollection|{$className}[] List of $className objects
      * @throws PropelException
      */
-    public function get$relCol(\$criteria = null, PropelPDO \$con = null)
+    public function get$relCol(\$criteria = null, ?PropelPDO \$con = null)
     {
         \$partial = \$this->{$collName}Partial && !\$this->isNew();
         if (null === \$this->$collName || null !== \$criteria  || \$partial) {
@@ -4067,7 +4067,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      * @param PropelPDO \$con Optional connection object
      * @return " . $this->getObjectClassname() . " The current object (for fluent API support)
      */
-    public function set{$relatedName}(PropelCollection \${$inputCollection}, PropelPDO \$con = null)
+    public function set{$relatedName}(PropelCollection \${$inputCollection}, ?PropelPDO \$con = null)
     {
         \${$inputCollection}ToDelete = \$this->get{$relatedName}(new Criteria(), \$con)->diff(\${$inputCollection});
 
@@ -4204,7 +4204,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      * @return $className
      * @throws PropelException
      */
-    public function get" . $this->getRefFKPhpNameAffix($refFK, $plural = false) . "(PropelPDO \$con = null)
+    public function get" . $this->getRefFKPhpNameAffix($refFK, $plural = false) . "(?PropelPDO \$con = null)
     {
 ";
         $script .= "
@@ -4241,7 +4241,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      * @return "               . $this->getObjectClassname() . " The current object (for fluent API support)
      * @throws PropelException
      */
-    public function set" . $this->getRefFKPhpNameAffix($refFK, $plural = false) . "($className \$v = null)
+    public function set" . $this->getRefFKPhpNameAffix($refFK, $plural = false) . "(?$className \$v = null)
     {
         \$this->$varName = \$v;
 
@@ -4466,7 +4466,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      *
      * @return PropelObjectCollection|{$relatedObjectClassName}[] List of {$relatedObjectClassName} objects
      */
-    public function get{$relatedName}(\$criteria = null, PropelPDO \$con = null)
+    public function get{$relatedName}(\$criteria = null, ?PropelPDO \$con = null)
     {
         if (null === \$this->$collName || null !== \$criteria) {
             if (\$this->isNew() && null === \$this->$collName) {
@@ -4510,7 +4510,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      * @param PropelPDO \$con Optional connection object
      * @return " . $this->getObjectClassname() . " The current object (for fluent API support)
      */
-    public function set{$relatedNamePlural}(PropelCollection \${$inputCollection}, PropelPDO \$con = null)
+    public function set{$relatedNamePlural}(PropelCollection \${$inputCollection}, ?PropelPDO \$con = null)
     {
         \$this->clear{$relatedNamePlural}();
         \$current{$relatedNamePlural} = \$this->get{$relatedNamePlural}(null, \$con);
@@ -4549,7 +4549,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      *
      * @return int the number of related $relatedObjectClassName objects
      */
-    public function count{$relatedName}(\$criteria = null, \$distinct = false, PropelPDO \$con = null)
+    public function count{$relatedName}(\$criteria = null, \$distinct = false, ?PropelPDO \$con = null)
     {
         if (null === \$this->$collName || null !== \$criteria) {
             if (\$this->isNew() && null === \$this->$collName) {
@@ -5222,7 +5222,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
         $reloadOnUpdate = $table->isReloadOnUpdate();
         $reloadOnInsert = $table->isReloadOnInsert();
         $script .= "
-    public function save(PropelPDO \$con = null" . ($reloadOnUpdate || $reloadOnInsert ? ", \$skipReload = false" : "") . ")
+    public function save(?PropelPDO \$con = null" . ($reloadOnUpdate || $reloadOnInsert ? ", \$skipReload = false" : "") . ")
     {";
     }
 
