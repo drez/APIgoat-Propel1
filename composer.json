@@ -12,8 +12,7 @@
   "autoload": {
       "classmap": ["runtime/lib", "generator/lib"]
   },
-  "include-path": ["runtime/lib", "generator/lib"],
-  "require": {
+"require": {
     "php": ">=5.2.4",
     "phing/phing": "~2.4"
   },
