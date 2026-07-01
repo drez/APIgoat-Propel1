@@ -36,24 +36,29 @@ class PropelObjectFormatter extends PropelFormatter
             if ($this->hasLimit) {
                 throw new PropelException('Cannot use limit() in conjunction with with() on a one-to-many relationship. Please remove the with() call, or the limit() call.');
             }
-            $pks = array();
+            // Dedup by a stringified PK hash instead of in_array() over a growing list,
+            // which was O(n^2) in the number of rows for one-to-many with() hydration.
+            // serialize() keeps composite PKs collision-free; scalar PKs stay cheap.
+            $pkSeen = array();
             $objectsByPks = array();
+            $poolingDisabled = (false === Propel::isInstancePoolingEnabled());
             while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
                 $object = $this->getAllObjectsFromRow($row);
                 $pk = $object->getPrimaryKey();
+                $pkHash = is_array($pk) ? serialize($pk) : (string) $pk;
 
-                if (false === Propel::isInstancePoolingEnabled()) {
-                    if (isset($objectsByPks[$pk])) {
-                        $this->mainObject = $objectsByPks[$pk];
+                if ($poolingDisabled) {
+                    if (isset($objectsByPks[$pkHash])) {
+                        $this->mainObject = $objectsByPks[$pkHash];
                         $object = $this->getAllObjectsFromRow($row);
                     }
 
-                    $objectsByPks[$pk] = $object;
+                    $objectsByPks[$pkHash] = $object;
                 }
 
-                if (!in_array($pk, $pks)) {
+                if (!isset($pkSeen[$pkHash])) {
                     $collection[] = $object;
-                    $pks[] = $pk;
+                    $pkSeen[$pkHash] = true;
                 }
             }
         } else {
@@ -100,7 +105,11 @@ class PropelObjectFormatter extends PropelFormatter
     public function getAllObjectsFromRow($row)
     {
         // get the main object
-        list($obj, $col) = call_user_func(array($this->peer, 'populateObject'), $row);
+        // Direct static dispatch instead of call_user_func(array(...)) — this line runs
+        // once per fetched row for every object query fleet-wide; avoids the per-row
+        // callable-array allocation and call_user_func indirection.
+        $peer = $this->peer;
+        list($obj, $col) = $peer::populateObject($row);
 
         if (null !== $this->mainObject) {
             $obj = $this->mainObject;
@@ -108,7 +117,8 @@ class PropelObjectFormatter extends PropelFormatter
 
         // related objects added using with()
         foreach ($this->getWith() as $modelWith) {
-            list($endObject, $col) = call_user_func(array($modelWith->getModelPeerName(), 'populateObject'), $row, $col);
+            $withPeer = $modelWith->getModelPeerName();
+            list($endObject, $col) = $withPeer::populateObject($row, $col);
 
             if (null !== $modelWith->getLeftPhpName() && !isset($hydrationChain[$modelWith->getLeftPhpName()])) {
                 continue;
