@@ -2984,11 +2984,14 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             }
         }
 
+        /* Cross-FK collections are not generated in this fork — do not emit
+           writes to their undeclared properties.
         foreach ($table->getCrossFks() as $fkList) {
             list($refFK, $crossFK) = $fkList;
             $script .= "
             \$this->" . $this->getCrossFKVarName($crossFK) . " = null;";
         }
+        */
 
         $script .= "
         } // if (deep)
@@ -4821,12 +4824,19 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             }
 ";
 
+        /* Cross-FK accessors/attributes are disabled in this fork (see the
+           commented addCrossFKAttributes/addCrossFKMethods calls), so the
+           scheduled-for-deletion save block must not be emitted either: it
+           reads ->{name}ScheduledForDeletion / ->coll{Name} properties and
+           calls get{Name}() that are never generated (undefined-property
+           warnings on every save, fatal if the block were ever entered).
         if ($table->hasCrossForeignKeys()) {
             foreach ($table->getCrossFks() as $fkList) {
                 list($refFK, $crossFK) = $fkList;
                 $this->addCrossFkScheduledForDeletion($script, $refFK, $crossFK);
             }
         }
+        */
 
         foreach ($table->getReferrers() as $refFK) {
             if ($refFK->isLocalPrimaryKey()) {
@@ -5806,6 +5816,8 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             }
             $vars[] = $varName;
         }
+        /* Cross-FK collections are not generated in this fork — do not emit
+           reads of their undeclared properties in clearAllReferences.
         foreach ($this->getTable()->getCrossFks() as $fkList) {
             list($refFK, $crossFK) = $fkList;
             $varName = $this->getCrossFKVarName($crossFK);
@@ -5817,6 +5829,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             }";
             $vars[] = $varName;
         }
+        */
 
         foreach ($table->getForeignKeys() as $fk) {
             $varName = $this->getFKVarName($fk);
