@@ -162,8 +162,11 @@ class PropelArrayFormatter extends PropelFormatter
         if ($mainObjectIsNew) {
             return $this->alreadyHydratedObjects[$this->class][$mainKey];
         } else {
-            // we still need to return a reference to something to avoid a warning
-            return $emptyVariable;
+            // we still need to return a reference to something to avoid a warning.
+            // Was `$emptyVariable` (undefined local) — fired an E_WARNING on PHP 8
+            // for every duplicate row in one-to-many array hydration; use the
+            // declared property.
+            return $this->emptyVariable;
         }
     }
 }

@@ -788,6 +788,14 @@ class ModelCriteria extends Criteria
      */
     public function addJoinObject(Join $join, $name = null)
     {
+        // PERF: the overwhelmingly common duplicate is the SAME named relation
+        // joined twice (generated joinWith() + a QueryBuilder use*Query()). Check
+        // the named slot first so we do one equals() instead of scanning — and
+        // comparing against — every existing join. Behavior-identical: the full
+        // scan below would also find this same-slot join equal and skip it.
+        if (null !== $name && isset($this->joins[$name]) && $join->equals($this->joins[$name])) {
+            return $this;
+        }
         $isAlreadyAdded = false;
         foreach ($this->joins as $alreadyAddedJoin) {
             if ($join->equals($alreadyAddedJoin)) {
@@ -1955,6 +1963,17 @@ class ModelCriteria extends Criteria
         $this->replacedColumns = array();
         $this->currentAlias = '';
         $this->foundMatch = false;
+        // PERF: the char-by-char scan below exists only to avoid rewriting
+        // column-like tokens inside quoted '...'/"..." string literals. When the
+        // clause contains neither quote char (the common case for emitted
+        // where()/condition()/withColumn() clauses), the whole clause is a single
+        // transformable segment — byte-identical to the scan's tail branch — so
+        // skip the loop and its per-char string appends.
+        if (strpbrk($clause, "'\"") === false) {
+            $clause = preg_replace_callback("/[\w\\\]+\.\w+/", array($this, 'doReplaceNameInExpression'), $clause);
+
+            return $this->foundMatch;
+        }
         $isAfterBackslash = false;
         $isInString = false;
         $stringQuotes = '';

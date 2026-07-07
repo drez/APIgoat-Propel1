@@ -135,7 +135,10 @@ class PropelObjectFormatter extends PropelFormatter
             // in which case it should not be related to the previous object
             if (null === $endObject || $endObject->isPrimaryKeyNull()) {
                 if ($modelWith->isAdd()) {
-                    call_user_func(array($startObject, $modelWith->getInitMethod()), false);
+                    // Variable-method dispatch — drops the per-row callable-array
+                    // allocation + call_user_func indirection (see 103fcede).
+                    $initMethod = $modelWith->getInitMethod();
+                    $startObject->$initMethod(false);
                 }
                 continue;
             }
@@ -145,10 +148,12 @@ class PropelObjectFormatter extends PropelFormatter
                 $hydrationChain = array($modelWith->getRightPhpName() => $endObject);
             }
 
-            call_user_func(array($startObject, $modelWith->getRelationMethod()), $endObject);
+            $relationMethod = $modelWith->getRelationMethod();
+            $startObject->$relationMethod($endObject);
 
             if ($modelWith->isAdd()) {
-                call_user_func(array($startObject, $modelWith->getResetPartialMethod()), false);
+                $resetPartialMethod = $modelWith->getResetPartialMethod();
+                $startObject->$resetPartialMethod(false);
             }
         }
 
