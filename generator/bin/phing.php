@@ -16,7 +16,14 @@ $dirname = dirname(__FILE__);
 $autoloaded = false;
 foreach (array($dirname . '/../../', $dirname . '/../../../../../') as $dir) {
     if (file_exists($file = realpath($dir) . '/vendor/autoload.php')) {
-        set_include_path($dir . '/vendor/phing/phing/classes' . PATH_SEPARATOR . get_include_path());
+        // generator/lib must be on the include path BEFORE composer's
+        // autoloader can include a generator task class: Phing::import()
+        // checks class_exists() first, so a classmap hit (e.g. PropelOMTask)
+        // includes the file before phing appends the taskdef classpath, and
+        // its relative require_once ('task/AbstractPropelDataModelTask.php')
+        // fatals without this entry.
+        set_include_path(realpath($dirname . '/../lib') . PATH_SEPARATOR
+            . $dir . '/vendor/phing/phing/classes' . PATH_SEPARATOR . get_include_path());
         include_once $file;
 
         $autoloaded = true;
