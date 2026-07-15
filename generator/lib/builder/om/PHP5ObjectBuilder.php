@@ -290,6 +290,10 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
 
                 if (!$refFK->isLocalPrimaryKey() && !in_array(lcfirst($fkName), $alreadyDeclaredSfd)) {
                     $this->addScheduledForDeletionAttribute($script, $fkName);
+                    // Multiple junction tables can target the same table via
+                    // same-named FKs (e.g. audit id_modification -> authy from
+                    // several cross-refs) — dedup against our own emissions too.
+                    $alreadyDeclaredSfd[] = lcfirst($fkName);
                 }
             }
         }
@@ -440,6 +444,9 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             $crossFK = $fkList[1];
             if (!in_array($this->getCrossFKVarName($crossFK), $alreadyDeclaredColl)) {
                 $this->addCrossFKAttributes($script, $crossFK);
+                // Multiple junction tables can target the same table via
+                // same-named FKs — dedup against our own emissions too.
+                $alreadyDeclaredColl[] = $this->getCrossFKVarName($crossFK);
             }
         }
 
