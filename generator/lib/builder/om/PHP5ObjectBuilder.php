@@ -270,17 +270,29 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             $this->addAttributes($script);
         }
 
-        /*if ($table->hasCrossForeignKeys()) {
+        // Declare the many-to-many "scheduled for deletion" attributes so the
+        // generated cross-FK save() code doesn't read an undeclared property
+        // (an "Undefined property" warning under PHP 8.2+). Skip any name a
+        // same-named referrer relation already declared above, to avoid a
+        // "Cannot redeclare" fatal where a direct FK and a cross-ref point at
+        // the same table (e.g. AuthyGroup <-> Contact).
+        if ($table->hasCrossForeignKeys()) {
+            $alreadyDeclaredSfd = array();
+            foreach ($table->getReferrers() as $refFK2) {
+                if (!$refFK2->isLocalPrimaryKey()) {
+                    $alreadyDeclaredSfd[] = lcfirst($this->getRefFKPhpNameAffix($refFK2, $plural = true));
+                }
+            }
             foreach ($table->getCrossFks() as $fkList) {
                 // @var $refFK ForeignKey
                 list($refFK, $crossFK) = $fkList;
                 $fkName = $this->getFKPhpNameAffix($crossFK, $plural = true);
 
-                if (!$refFK->isLocalPrimaryKey()) {
+                if (!$refFK->isLocalPrimaryKey() && !in_array(lcfirst($fkName), $alreadyDeclaredSfd)) {
                     $this->addScheduledForDeletionAttribute($script, $fkName);
                 }
             }
-        }*/
+        }
 
         foreach ($table->getReferrers() as $refFK) {
             $fkName = $this->getRefFKPhpNameAffix($refFK, $plural = true);
@@ -415,11 +427,21 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
             $this->addRefFKAttributes($script, $refFK);
         }
 
-        // many-to-many relationships
-        /*foreach ($table->getCrossFks() as $fkList) {
+        // many-to-many relationships: declare the aggregation collection
+        // attributes ($this->collXxx) the generated cross-FK save() code reads,
+        // to avoid "Undefined property" warnings under PHP 8.2+. Skip any name a
+        // same-named referrer relation already declared above (see addClass()),
+        // which would otherwise be a "Cannot redeclare" fatal.
+        $alreadyDeclaredColl = array();
+        foreach ($table->getReferrers() as $refFK2) {
+            $alreadyDeclaredColl[] = 'coll' . $this->getRefFKPhpNameAffix($refFK2, $plural = true);
+        }
+        foreach ($table->getCrossFks() as $fkList) {
             $crossFK = $fkList[1];
-            $this->addCrossFKAttributes($script, $crossFK);
-        }*/
+            if (!in_array($this->getCrossFKVarName($crossFK), $alreadyDeclaredColl)) {
+                $this->addCrossFKAttributes($script, $crossFK);
+            }
+        }
 
         $this->addAlreadyInSaveAttribute($script);
         $this->addAlreadyInValidationAttribute($script);
