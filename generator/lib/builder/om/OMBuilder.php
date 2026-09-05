@@ -153,6 +153,54 @@ abstract class OMBuilder extends DataModelBuilder
     }
 
     /**
+     * Builds a self-anchored, idempotent include statement for a file emitted by
+     * another builder of this same output tree.
+     *
+     * Propel historically emitted `require '<path relative to the output dir>';`,
+     * which resolves through include_path/CWD instead of the emitting file's own
+     * location, and which fatals with "Cannot declare class ... already in use"
+     * as soon as the target has already been pulled in by an autoloader (every
+     * generated tree registered with Composer/PSR-4 is in that situation). Both
+     * problems go away by anchoring the path on __DIR__ and using require_once.
+     *
+     * @param  string $requiredClassFilePath Path of the required file, relative to the output directory.
+     * @return string The statement, without a trailing newline.
+     */
+    public function getRequireStatement($requiredClassFilePath)
+    {
+        $fromDir = dirname($this->getClassFilePath());
+        $from = ('.' === $fromDir || '' === $fromDir) ? array() : explode('/', $fromDir);
+        $to = explode('/', $requiredClassFilePath);
+
+        // Drop the shared leading directories, then walk up out of whatever is
+        // left of the emitting file's own directory.
+        while (!empty($from) && count($to) > 1 && $from[0] === $to[0]) {
+            array_shift($from);
+            array_shift($to);
+        }
+
+        return "require_once __DIR__ . '/" . str_repeat('../', count($from)) . implode('/', $to) . "';";
+    }
+
+    /**
+     * Returns the build timestamp stamped into the generated class headers when
+     * the `propel.addTimeStamp` build property is on.
+     *
+     * Formatted exactly like the C/POSIX-locale strftime('%c') this replaces
+     * ('%a %b %e %H:%M:%S %Y', e.g. "Thu Sep  5 18:45:00 2026"); strftime() is
+     * deprecated as of PHP 8.1 and removed in PHP 9. %e is the space-padded day
+     * of the month, which date() has no single token for.
+     *
+     * @return string
+     */
+    public function getBuildTimestamp()
+    {
+        $ts = time();
+
+        return date('D M', $ts) . sprintf('%3d ', date('j', $ts)) . date('H:i:s Y', $ts);
+    }
+
+    /**
      * Gets package name for this table.
      * This is overridden by child classes that have different packages.
      *
