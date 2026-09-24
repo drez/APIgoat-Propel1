@@ -46,6 +46,9 @@ class XmlToAppData
 
     private $encoding;
 
+    /** @var bool unused legacy flag, declared to avoid PHP 8.2+ dynamic-property deprecation */
+    private $firstPass;
+
     /**
      * two-dimensional array,
      * first dimension is for schemas(key is the path to the schema file),
@@ -120,8 +123,7 @@ class XmlToAppData
 
         $parser = xml_parser_create();
         xml_parser_set_option($parser, XML_OPTION_CASE_FOLDING, 0);
-        xml_set_object($parser, $this);
-        xml_set_element_handler($parser, 'startElement', 'endElement');
+        xml_set_element_handler($parser, array($this, 'startElement'), array($this, 'endElement'));
         if (!xml_parse($parser, $xmlString)) {
             throw new Exception(sprintf("XML error: %s at line %d",
                 xml_error_string(xml_get_error_code($parser)),

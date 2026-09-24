@@ -1664,7 +1664,7 @@ class ModelCriteria extends Criteria
             }
             $criteria->basePostDelete($affectedRows, $con);
             $con->commit();
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             $con->rollback();
             throw $e;
         }
@@ -1711,7 +1711,7 @@ class ModelCriteria extends Criteria
             $con->commit();
 
             return $affectedRows;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             $con->rollBack();
             throw $e;
         }
@@ -1803,7 +1803,7 @@ class ModelCriteria extends Criteria
             $criteria->basePostUpdate($affectedRows, $con);
 
             $con->commit();
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             $con->rollBack();
             throw $e;
         }

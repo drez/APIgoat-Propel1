@@ -71,7 +71,7 @@ class QueryBuilder extends OMBuilder
     {
         $table = $this->getTable();
         $tableName = $table->getName();
-        $tableDesc = $table->getDescription();
+        $tableDesc = $this->docblockSafe($table->getDescription());
         $queryClass = $this->getStubQueryBuilder()->getClassname();
         $modelClass = $this->getStubObjectBuilder()->getClassname();
         $parentClass = $this->getBehaviorContent('parentClass');
@@ -224,6 +224,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
         $this->addBasePreSelect($script);
         $this->addBasePreDelete($script);
         $this->addBasePostDelete($script);
+        $this->addDoDeleteAll($script);
         $this->addBasePreUpdate($script);
         $this->addBasePostUpdate($script);
         // apply behaviors
@@ -449,14 +450,18 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
         }
         $pkHash = $this->getPeerBuilder()->getInstancePoolKeySnippet($pks);
         $script .= "
-        if ((null !== (\$obj = {$peerClassname}::getInstanceFromPool({$pkHash}))) && !\$this->formatter) {
-            // the object is already in the instance pool
-            return \$obj;
-        }
         if (\$con === null) {
             \$con = Propel::getConnection({$peerClassname}::DATABASE_NAME, Propel::CONNECTION_READ);
         }
         \$this->basePreSelect(\$con);
+        // The instance pool may only answer an untouched query: any criteria or
+        // join present after basePreSelect() (tenant scope, soft delete, a caller
+        // filter) must reach the database.
+        if (!\$this->formatter && empty(\$this->map) && empty(\$this->joins)
+         && null !== (\$obj = {$peerClassname}::getInstanceFromPool({$pkHash}))) {
+            // the object is already in the instance pool
+            return \$obj;
+        }
         if (\$this->formatter || \$this->modelAlias || \$this->with || \$this->select
          || \$this->selectColumns || \$this->asColumns || \$this->selectModifiers
          || \$this->map || \$this->having || \$this->joins) {
@@ -515,15 +520,6 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
             $conditions[] = sprintf('%s = :p%d', $platform->quoteIdentifier($column->getName()), $index);
         }
         $query = sprintf('SELECT %s FROM %s WHERE %s', implode(', ', $selectColumns), $platform->quoteIdentifier($table->getName()), implode(' AND ', $conditions));
-        $pks = array();
-        if ($table->hasCompositePrimaryKey()) {
-            foreach ($table->getPrimaryKey() as $index => $column) {
-                $pks[] = "\$key[$index]";
-            }
-        } else {
-            $pks[] = "\$key";
-        }
-        $pkHashFromRow = $this->getPeerBuilder()->getInstancePoolKeySnippet($pks);
         $script .= "
     /**
      * Find object by primary key using raw SQL to go fast.
@@ -568,7 +564,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
         }
         $script .= "
             \$obj->hydrate(\$row);
-            {$peerClassname}::addInstanceToPool(\$obj, $pkHashFromRow);
+            {$peerClassname}::addInstanceToPool(\$obj);
         }
         \$stmt->closeCursor();
 
@@ -819,11 +815,11 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
      * Example usage:
      * <code>
      * \$query->filterBy$colPhpName('fooValue');   // WHERE $colName = 'fooValue'
-     * \$query->filterBy$colPhpName('%fooValue%'); // WHERE $colName LIKE '%fooValue%'
+     * \$query->filterBy$colPhpName('%fooValue%', Criteria::LIKE); // WHERE $colName LIKE '%fooValue%'
      * </code>
      *
      * @param     string \$$variableName The value to use as filter.
-     *              Accepts wildcards (* and % trigger a LIKE)";
+     *              Wildcards are literal unless Criteria::LIKE is passed explicitly.";
         } elseif ($col->isBooleanType()) {
             $script .= "
      * Example usage:
@@ -934,12 +930,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
         } elseif ($col->isTextType()) {
             $script .= "
         if (null === \$comparison) {
-            if (is_array(\$$variableName)) {
-                \$comparison = Criteria::IN;
-            } elseif (preg_match('/[\%\*]/', \$$variableName)) {
-                \$$variableName = str_replace('*', '%', \$$variableName);
-                \$comparison = Criteria::LIKE;
-            }
+            \$comparison = is_array(\$$variableName) ? Criteria::IN : Criteria::EQUAL;
         }";
         } elseif ($col->isBooleanType()) {
             $script .= "
@@ -1426,6 +1417,43 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . "
     {" . $behaviorCode . "
 
         return \$this->postDelete(\$affectedRows, \$con);
+    }
+";
+    }
+
+    /**
+     * Adds the doDeleteAll() override for this object.
+     *
+     * ModelCriteria::deleteAll() runs basePreDelete() (tenant scope, behavior
+     * guards) and then doDeleteAll(), whose runtime version calls
+     * Peer::doDeleteAll() and silently drops every criterion. When the query
+     * carries any condition or join at that point, delete through the criteria
+     * instead so the scope is honoured; an untouched query still empties the
+     * whole table.
+     *
+     * @param string &$script The script will be modified in this method.
+     */
+    protected function addDoDeleteAll(&$script)
+    {
+        $peerClassname = $this->getPeerClassname();
+        $script .= "
+    /**
+     * Issue a DELETE query deleting all rows matched by this query.
+     * Called by ModelCriteria::deleteAll() inside a transaction, after basePreDelete().
+     * A query carrying conditions or joins (e.g. a tenant scope added by
+     * basePreDelete()) deletes through its criteria; an untouched query empties the table.
+     *
+     * @param     PropelPDO \$con a connection object
+     *
+     * @return integer the number of deleted rows
+     */
+    public function doDeleteAll(\$con)
+    {
+        if (!empty(\$this->map) || !empty(\$this->joins)) {
+            return {$peerClassname}::doDelete(\$this, \$con);
+        }
+
+        return parent::doDeleteAll(\$con);
     }
 ";
     }

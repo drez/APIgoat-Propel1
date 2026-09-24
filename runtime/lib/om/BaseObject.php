@@ -12,14 +12,8 @@
  * This class contains attributes and methods that are used by all
  * business objects within the system.
  *
- * @method     BaseObject fromXML(string $data) Populate the object from an XML string
- * @method     BaseObject fromYAML(string $data) Populate the object from a YAML string
  * @method     BaseObject fromJSON(string $data) Populate the object from a JSON string
- * @method     BaseObject fromCSV(string $data) Populate the object from a CSV string
- * @method     string toXML(boolean $includeLazyLoadColumns) Export the object to an XML string
- * @method     string toYAML(boolean $includeLazyLoadColumns) Export the object to a YAML string
  * @method     string toJSON(boolean $includeLazyLoadColumns) Export the object to a JSON string
- * @method     string toCSV(boolean $includeLazyLoadColumns) Export the object to a CSV string
  *
  * @author     Hans Lellelid <hans@xmpl.org> (Propel)
  * @author     Frank Y. Kim <frank.kim@clearink.com> (Torque)
@@ -369,17 +363,19 @@ abstract class BaseObject
     }
 
     /**
-     * Populate the current object from a string, using a given parser format
+     * Populate the current object from a JSON string.
+     * Only the JSON format is supported (the XML/YAML/CSV parsers were removed).
      * <code>
      * $book = new Book();
      * $book->importFrom('JSON', '{"Id":9012,"Title":"Don Juan","ISBN":"0140422161","Price":12.99,"PublisherId":1234,"AuthorId":5678}');
      * </code>
      *
-     * @param mixed $parser A PropelParser instance,
-     *                       or a format name ('XML', 'YAML', 'JSON', 'CSV')
-     * @param string $data The source data to import from
+     * @param mixed  $parser A PropelParser instance, or the format name 'JSON'
+     * @param string $data   The source data to import from
      *
      * @return BaseObject The current object, for fluid interface
+     *
+     * @throws PropelException on an unsupported format
      */
     public function importFrom($parser, $data)
     {
@@ -391,14 +387,16 @@ abstract class BaseObject
     }
 
     /**
-     * Export the current object properties to a string, using a given parser format
+     * Export the current object properties to a JSON string.
+     * A legacy format name ('XML', 'YAML', 'CSV' - e.g. a DEFAULT_STRING_FORMAT
+     * baked into not-yet-rebuilt classes) falls back to JSON rather than throwing.
      * <code>
      * $book = BookQuery::create()->findPk(9012);
      * echo $book->exportTo('JSON');
      *  => {"Id":9012,"Title":"Don Juan","ISBN":"0140422161","Price":12.99,"PublisherId":1234,"AuthorId":5678}');
      * </code>
      *
-     * @param mixed   $parser                 A PropelParser instance, or a format name ('XML', 'YAML', 'JSON', 'CSV')
+     * @param mixed   $parser                 A PropelParser instance, or a format name
      * @param boolean $includeLazyLoadColumns (optional) Whether to include lazy load(ed) columns. Defaults to TRUE.
      *
      * @return string The exported data
@@ -406,7 +404,7 @@ abstract class BaseObject
     public function exportTo($parser, $includeLazyLoadColumns = true)
     {
         if (!$parser instanceof PropelParser) {
-            $parser = PropelParser::getParser($parser);
+            $parser = PropelParser::getExportParser($parser);
         }
 
         return $parser->fromArray($this->toArray(BasePeer::TYPE_PHPNAME, $includeLazyLoadColumns, array(), true));
@@ -426,7 +424,8 @@ abstract class BaseObject
     /**
      * Catches calls to undefined methods.
      *
-     * Provides magic import/export method support (fromXML()/toXML(), fromYAML()/toYAML(), etc.).
+     * Provides virtual column getters (getX() for columns added with
+     * withColumn()) and the magic fromJSON()/toJSON() methods.
      * Allows to define default __call() behavior if you use a custom BaseObject
      *
      * @param string $name
@@ -438,7 +437,7 @@ abstract class BaseObject
      */
     public function __call($name, $params)
     {
-        if (preg_match('/get(\w+)/', $name, $matches)) {
+        if (preg_match('/^get(\w+)$/', $name, $matches)) {
             $virtualColumn = $matches[1];
             if ($this->hasVirtualColumn($virtualColumn)) {
                 return $this->getVirtualColumn($virtualColumn);
@@ -449,13 +448,13 @@ abstract class BaseObject
                 return $this->getVirtualColumn($virtualColumn);
             }
         }
-        if (preg_match('/^from(\w+)$/', $name, $matches)) {
-            return $this->importFrom($matches[1], reset($params));
+        if (strtolower($name) === 'fromjson') {
+            return $this->importFrom('JSON', reset($params));
         }
-        if (preg_match('/^to(\w+)$/', $name, $matches)) {
+        if (strtolower($name) === 'tojson') {
             $includeLazyLoadColumns = isset($params[0]) ? $params[0] : true;
 
-            return $this->exportTo($matches[1], $includeLazyLoadColumns);
+            return $this->exportTo('JSON', $includeLazyLoadColumns);
         }
         throw new PropelException('Call to undefined method: ' . $name);
     }

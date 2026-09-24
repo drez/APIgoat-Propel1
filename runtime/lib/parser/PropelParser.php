@@ -50,59 +50,35 @@ abstract class PropelParser
     }
 
     /**
-     * Loads data from a file. Executes PHP code blocks in the file.
+     * Factory for getting a parser instance. Only JSON remains: the XML, YAML
+     * and CSV parsers (and the bundled sfYaml) were removed.
      *
-     * @param string $path Path to the file to load
-     *
-     * @return string The file content processed by PHP
-     *
-     * @throws PropelException
-     */
-    public function load($path)
-    {
-        if (!file_exists($path)) {
-            throw new PropelException(sprintf('File "%s" does not exist or is unreadable', $path));
-        }
-        ob_start();
-        include($path);
-        $contents = ob_get_clean();
-
-        return $contents;
-    }
-
-    /**
-     * Dumps data to a file, or to STDOUT if no filename is given
-     *
-     * @param string $data The file content
-     * @param string $path Path of the file to create
-     *
-     * @return int|null If path given, the written bytes, null otherwise.
-     */
-    public function dump($data, $path = null)
-    {
-        if ($path !== null) {
-            return file_put_contents($path, $data);
-        } else {
-            echo $data;
-        }
-    }
-
-    /**
-     * Factory for getting an instance of a subclass of PropelParser
-     *
-     * @param string $type Parser type, amon 'XML', 'YAML', 'JSON', and 'CSV'
+     * @param string $type Parser type, 'JSON'
      *
      * @return PropelParser A PropelParser subclass instance
      *
      * @throws PropelException
      */
-    public static function getParser($type = 'XML')
+    public static function getParser($type = 'JSON')
     {
-        $class = sprintf('Propel%sParser', $type);
-        if (!class_exists($class)) {
-            throw new PropelException(sprintf('Unknown parser class "%s"', $class));
+        if (strtoupper((string) $type) !== 'JSON') {
+            throw new PropelException(sprintf('Unknown parser "%s" (only JSON is supported)', $type));
         }
 
-        return new $class;
+        return new PropelJSONParser();
+    }
+
+    /**
+     * Parser for exports: a legacy format name (e.g. a DEFAULT_STRING_FORMAT of
+     * 'YAML' baked into classes built before the parser removal) falls back to
+     * JSON so __toString()/exportTo() never throw on it.
+     *
+     * @param string $type
+     *
+     * @return PropelParser
+     */
+    public static function getExportParser($type = 'JSON')
+    {
+        return new PropelJSONParser();
     }
 }

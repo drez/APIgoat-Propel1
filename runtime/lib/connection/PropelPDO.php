@@ -248,6 +248,11 @@ class PropelPDO extends PDO
      * Overrides PDO::commit() to only commit the transaction if we are in the outermost
      * transaction nesting level.
      *
+     * At the outermost level, a failed commit (a nested transaction was rolled
+     * back, or the driver's commit throws) physically rolls back the transaction
+     * (if the driver still has one open), resets the nesting state and rethrows.
+     * The caller's usual catch { $con->rollBack(); throw; } is then a no-op.
+     *
      * @return boolean
      *
      * @throws PropelException
@@ -259,13 +264,23 @@ class PropelPDO extends PDO
 
         if ($opcount > 0) {
             if ($opcount === 1) {
-                if ($this->isUncommitable) {
-                    throw new PropelException('Cannot commit because a nested transaction was rolled back');
-                } else {
+                try {
+                    if ($this->isUncommitable) {
+                        throw new PropelException('Cannot commit because a nested transaction was rolled back');
+                    }
                     $return = parent::commit();
                     if ($this->useDebug) {
                         $this->log('Commit transaction', null, __METHOD__);
                     }
+                } catch (\Throwable $e) {
+                    $this->abortTransaction();
+                    throw $e;
+                }
+                if ($return === false) {
+                    // ERRMODE_SILENT/WARNING failure: do not leave a dangling transaction
+                    $this->abortTransaction();
+
+                    return false;
                 }
             }
 
@@ -277,7 +292,9 @@ class PropelPDO extends PDO
 
     /**
      * Overrides PDO::rollBack() to only rollback the transaction if we are in the outermost
-     * transaction nesting level
+     * transaction nesting level. A nested rollBack() only flags the transaction as
+     * uncommitable. Outside a transaction (e.g. after a failed outermost commit()
+     * already rolled back) it is a harmless no-op.
      *
      * @return boolean Whether operation was successful.
      */
@@ -288,14 +305,22 @@ class PropelPDO extends PDO
 
         if ($opcount > 0) {
             if ($opcount === 1) {
-                $return = parent::rollBack();
-                if ($this->useDebug) {
-                    $this->log('Rollback transaction', null, __METHOD__);
+                try {
+                    if (parent::inTransaction()) {
+                        $return = parent::rollBack();
+                    }
+                    if ($this->useDebug) {
+                        $this->log('Rollback transaction', null, __METHOD__);
+                    }
+                } finally {
+                    $this->nestedTransactionCount = 0;
+                    $this->isUncommitable = false;
                 }
-            } else {
-                $this->isUncommitable = true;
+
+                return $return;
             }
 
+            $this->isUncommitable = true;
             $this->nestedTransactionCount--;
         }
 
@@ -313,20 +338,45 @@ class PropelPDO extends PDO
         $return = true;
 
         if ($this->nestedTransactionCount) {
-            // If we're in a transaction, always roll it back
-            // regardless of nesting level.
-            $return = parent::rollBack();
-
-            // reset nested transaction count to 0 so that we don't
-            // try to commit (or rollback) the transaction outside this scope.
-            $this->nestedTransactionCount = 0;
-
-            if ($this->useDebug) {
-                $this->log('Rollback transaction', null, __METHOD__);
+            try {
+                // If we're in a transaction, always roll it back
+                // regardless of nesting level.
+                if (parent::inTransaction()) {
+                    $return = parent::rollBack();
+                }
+                if ($this->useDebug) {
+                    $this->log('Rollback transaction', null, __METHOD__);
+                }
+            } finally {
+                // reset nested transaction count to 0 so that we don't
+                // try to commit (or rollback) the transaction outside this scope.
+                $this->nestedTransactionCount = 0;
+                $this->isUncommitable = false;
             }
         }
 
         return $return;
+    }
+
+    /**
+     * Physically rolls back the driver transaction if one is still open (a
+     * DDL statement may have implicitly committed it) and resets the nesting
+     * state. Never throws: it runs while another exception is propagating.
+     */
+    protected function abortTransaction()
+    {
+        try {
+            if (parent::inTransaction()) {
+                parent::rollBack();
+            }
+        } catch (\Throwable $ignored) {
+            // the original failure is what matters to the caller
+        }
+        $this->nestedTransactionCount = 0;
+        $this->isUncommitable = false;
+        if ($this->useDebug) {
+            $this->log('Rollback transaction (failed commit)', null, __METHOD__);
+        }
     }
 
     /**

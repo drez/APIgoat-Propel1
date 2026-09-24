@@ -521,7 +521,12 @@ class Table extends ScopedElement implements IDMethod
                 // no matching index defined in the schema, so we have to create one.
                 // MySQL needs indices on any columns that serve as foreign keys. these are not auto-created prior to 4.1.2
 
-                $name = substr_replace($foreignKey->getName(), 'FI_', strrpos($foreignKey->getName(), 'FK_'), 3);
+                // FK_ -> FI_ on the last occurrence; a custom FK name without
+                // 'FK_' used to get its first 3 chars overwritten (strrpos false -> 0).
+                $fkPos = strrpos($foreignKey->getName(), 'FK_');
+                $name = ($fkPos === false)
+                    ? 'FI_' . $foreignKey->getName()
+                    : substr_replace($foreignKey->getName(), 'FI_', $fkPos, 3);
                 if ($this->hasIndex($name)) {
                     //if we have already a index with this name, then it looks like the columns of this index has just
                     //been changed, so remove it and inject it again. This is the case if a referenced table is handled
@@ -1210,7 +1215,7 @@ class Table extends ScopedElement implements IDMethod
      */
     public function getBehavior($name)
     {
-        return $this->behaviors[$name];
+        return isset($this->behaviors[$name]) ? $this->behaviors[$name] : null;
     }
 
     /**

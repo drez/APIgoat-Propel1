@@ -241,7 +241,7 @@ class Column extends XMLElement
 
             if ($this->getAttribute('valueSet', null) !== null) {
                 if (version_compare(PHP_VERSION, '5.3.0', '>=')) {
-                    $valueSet = str_getcsv($this->getAttribute("valueSet"));
+                    $valueSet = str_getcsv($this->getAttribute("valueSet"), ',', '"', '\\');
                 } else {
                     // unfortunately, no good fallback for PHP 5.2
                     $valueSet = explode(',', $this->getAttribute("valueSet"));
@@ -250,7 +250,7 @@ class Column extends XMLElement
                 $this->valueSet = $valueSet;
             } elseif (preg_match('/enum\((.*?)\)/i', $this->getAttribute('sqlType', ''), $matches)) {
                 if (version_compare(PHP_VERSION, '5.3.0', '>=')) {
-                    $valueSet = str_getcsv($matches['1'], ',', '\'');
+                    $valueSet = str_getcsv($matches['1'], ',', '\'', '\\');
                 } else {
                     // unfortunately, no good fallback for PHP 5.2
                     $valueSet = array();
@@ -1172,11 +1172,15 @@ class Column extends XMLElement
             if ($this->isNumericType()) {
                 $dflt = (float) $defaultValue->getValue();
             } elseif ($this->isTextType() || $this->getDefaultValue()->isExpression()) {
-                $dflt = "'" . str_replace("'", "\'", $defaultValue->getValue()) . "'";
+                // var_export escapes both quotes and backslashes, so a default
+                // ending in '\' (or containing \') cannot break out of the literal
+                // in the generated PHP. Identical output for plain values.
+                $dflt = var_export((string) $defaultValue->getValue(), true);
             } elseif ($this->getType() == PropelTypes::BOOLEAN) {
                 $dflt = $this->booleanValue($defaultValue->getValue()) ? 'true' : 'false';
             } else {
-                $dflt = "'" . $defaultValue->getValue() . "'";
+                // ENUM and other non-text types: previously emitted unescaped.
+                $dflt = var_export((string) $defaultValue->getValue(), true);
             }
         } else {
             $dflt = "null";

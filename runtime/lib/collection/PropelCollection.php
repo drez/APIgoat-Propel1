@@ -12,15 +12,9 @@
  * Class for iterating over a list of Propel elements
  * The collection keys must be integers - no associative array accepted
  *
- * @method     PropelCollection fromXML(string $data) Populate the collection from an XML string
- * @method     PropelCollection fromYAML(string $data) Populate the collection from a YAML string
  * @method     PropelCollection fromJSON(string $data) Populate the collection from a JSON string
- * @method     PropelCollection fromCSV(string $data) Populate the collection from a CSV string
  *
- * @method     string toXML(boolean $usePrefix, boolean $includeLazyLoadColumns) Export the collection to an XML string
- * @method     string toYAML(boolean $usePrefix, boolean $includeLazyLoadColumns) Export the collection to a YAML string
  * @method     string toJSON(boolean $usePrefix, boolean $includeLazyLoadColumns) Export the collection to a JSON string
- * @method     string toCSV(boolean $usePrefix, boolean $includeLazyLoadColumns) Export the collection to a CSV string
  *
  * @author     Francois Zaninotto
  * @package    propel.runtime.collection
@@ -502,7 +496,9 @@ class PropelCollection extends ArrayObject implements Serializable
      * $coll->importFrom('JSON', '{{"Id":9012,"Title":"Don Juan","ISBN":"0140422161","Price":12.99,"PublisherId":1234,"AuthorId":5678}}');
      * </code>
      *
-     * @param mixed  $parser A PropelParser instance, or a format name ('XML', 'YAML', 'JSON', 'CSV')
+     * Only the JSON format is supported (the XML/YAML/CSV parsers were removed).
+     *
+     * @param mixed  $parser A PropelParser instance, or the format name 'JSON'
      * @param string $data   The source data to import from
      *
      * @return BaseObject The current object, for fluid interface
@@ -526,7 +522,9 @@ class PropelCollection extends ArrayObject implements Serializable
      *
      * A PropelOnDemandCollection cannot be exported. Any attempt will result in a PropelExecption being thrown.
      *
-     * @param mixed   $parser    A PropelParser instance, or a format name ('XML', 'YAML', 'JSON', 'CSV')
+     * A legacy format name ('XML', 'YAML', 'CSV') falls back to JSON.
+     *
+     * @param mixed   $parser    A PropelParser instance, or a format name
      * @param boolean $usePrefix (optional) If true, the returned element keys will be prefixed with the
      *                                            model class name ('Article_0', 'Article_1', etc). Defaults to TRUE.
      *                                            Not supported by PropelArrayCollection, as PropelArrayFormatter has
@@ -540,7 +538,7 @@ class PropelCollection extends ArrayObject implements Serializable
     public function exportTo($parser, $usePrefix = true, $includeLazyLoadColumns = true)
     {
         if (!$parser instanceof PropelParser) {
-            $parser = PropelParser::getParser($parser);
+            $parser = PropelParser::getExportParser($parser);
         }
 
         return $parser->listFromArray($this->toArray(null, $usePrefix, BasePeer::TYPE_PHPNAME, $includeLazyLoadColumns));
@@ -549,8 +547,7 @@ class PropelCollection extends ArrayObject implements Serializable
     /**
      * Catches calls to undefined methods.
      *
-     * Provides magic import/export method support (fromXML()/toXML(), fromYAML()/toYAML(), etc.).
-     * Allows to define default __call() behavior if you use a custom BaseObject
+     * Provides the magic fromJSON()/toJSON() methods.
      *
      * @param string $name
      * @param mixed  $params
@@ -561,28 +558,32 @@ class PropelCollection extends ArrayObject implements Serializable
      */
     public function __call($name, $params)
     {
-        if (preg_match('/^from(\w+)$/', $name, $matches)) {
-            return $this->importFrom($matches[1], reset($params));
+        if (strtolower($name) === 'fromjson') {
+            return $this->importFrom('JSON', reset($params));
         }
-        if (preg_match('/^to(\w+)$/', $name, $matches)) {
+        if (strtolower($name) === 'tojson') {
             $usePrefix = isset($params[0]) ? $params[0] : true;
             $includeLazyLoadColumns = isset($params[1]) ? $params[1] : true;
 
-            return $this->exportTo($matches[1], $usePrefix, $includeLazyLoadColumns);
+            return $this->exportTo('JSON', $usePrefix, $includeLazyLoadColumns);
         }
         throw new PropelException('Call to undefined method: ' . $name);
     }
 
     /**
-     * Returns a string representation of the current collection.
-     * Based on the string representation of the underlying objects, defined in
-     * the Peer::DEFAULT_STRING_FORMAT constant
+     * Returns a JSON representation of the current collection
+     * (same shape as toJSON(): prefixed keys, PHP names).
      *
      * @return string
      */
     public function __toString()
     {
-        return (string) $this->exportTo(constant($this->getPeerClass() . '::DEFAULT_STRING_FORMAT'));
+        $json = json_encode(
+            $this->toArray(null, true, BasePeer::TYPE_PHPNAME),
+            JSON_PARTIAL_OUTPUT_ON_ERROR
+        );
+
+        return $json === false ? '' : $json;
     }
 
     /**

@@ -254,10 +254,10 @@ class " . $this->getClassname() . " extends TableMap
             foreach ($val->getRules() as $rule) {
                 if ($val->getTranslate() !== Validator::TRANSLATE_NONE) {
                     $script .= "
-        \$this->addValidator('$cup', '" . $rule->getName() . "', '" . $rule->getClass() . "', '" . str_replace("'", "\'", $rule->getValue()) . "', " . $val->getTranslate() . "('" . str_replace("'", "\'", $rule->getMessage()) . "'));";
+        \$this->addValidator('$cup', '" . $rule->getName() . "', '" . $rule->getClass() . "', " . var_export((string) $rule->getValue(), true) . ", " . $val->getTranslate() . "(" . var_export((string) $rule->getMessage(), true) . "));";
                 } else {
                     $script .= "
-        \$this->addValidator('$cup', '" . $rule->getName() . "', '" . $rule->getClass() . "', '" . str_replace("'", "\'", $rule->getValue()) . "', '" . str_replace("'", "\'", $rule->getMessage()) . "');";
+        \$this->addValidator('$cup', '" . $rule->getName() . "', '" . $rule->getClass() . "', " . var_export((string) $rule->getValue(), true) . ", " . var_export((string) $rule->getMessage(), true) . ");";
                 } // if ($rule->getTranslation() ...
             } // foreach rule
         } // foreach validator

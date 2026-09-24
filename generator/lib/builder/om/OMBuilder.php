@@ -31,6 +31,20 @@ abstract class OMBuilder extends DataModelBuilder
     protected $declaredClasses = array();
 
     /**
+     * Makes schema-supplied free text (table/column descriptions) safe to
+     * interpolate into an emitted /** ... *\/ docblock: a literal '*' + '/'
+     * would close the comment early and turn the rest into live PHP.
+     * Text without that sequence is returned unchanged (byte-identical).
+     *
+     * @param  string|null $text
+     * @return string
+     */
+    protected function docblockSafe($text)
+    {
+        return str_replace('*/', '*\/', (string) $text);
+    }
+
+    /**
      * Builds the PHP source for current class and returns it as a string.
      *
      * This is the main entry point and defines a basic structure that classes should follow.

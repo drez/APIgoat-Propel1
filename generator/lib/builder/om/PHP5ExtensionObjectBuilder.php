@@ -64,7 +64,7 @@ class PHP5ExtensionObjectBuilder extends ObjectBuilder
         $table = $this->getTable();
         $this->declareClassFromBuilder($this->getObjectBuilder());
         $tableName = $table->getName();
-        $tableDesc = $table->getDescription();
+        $tableDesc = $this->docblockSafe($table->getDescription());
 
         switch ($table->treeMode()) {
             case 'NestedSet':

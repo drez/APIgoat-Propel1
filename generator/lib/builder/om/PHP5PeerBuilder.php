@@ -100,7 +100,7 @@ class PHP5PeerBuilder extends PeerBuilder
     protected function addClassOpen(&$script)
     {
         $tableName = $this->getTable()->getName();
-        $tableDesc = $this->getTable()->getDescription();
+        $tableDesc = $this->docblockSafe($this->getTable()->getDescription());
 
         if ($this->getBuildProperty('addClassLevelComment')) {
             $script .= "
@@ -571,15 +571,21 @@ abstract class " . $this->getClassname() . $extendingPeerClass . "
      * @param string \$enumVal ENUM value.
      *
      * @return int SQL value
+     * @throws PropelException - if the value is not a scalar or not in the value set.
      */
     public static function getSqlValueForEnum(\$colname, \$enumVal)
     {
+        if (!is_scalar(\$enumVal) || is_bool(\$enumVal)) {
+            throw new PropelException(sprintf('Value of type \"%s\" is not accepted in enumerated column \"%s\"', get_debug_type(\$enumVal), \$colname));
+        }
+        \$enumVal = (string) \$enumVal;
         \$values = " . $this->getPeerClassname() . "::getValueSet(\$colname);
-        if (!in_array(\$enumVal, \$values)) {
-            throw new PropelException(sprintf('Value \"%s\" is not accepted in this enumerated column', \$colname));
+        \$sqlValue = array_search(\$enumVal, \$values, true);
+        if (false === \$sqlValue) {
+            throw new PropelException(sprintf('Value \"%s\" is not accepted in enumerated column \"%s\"', \$enumVal, \$colname));
         }
 
-        return array_search(\$enumVal, \$values);
+        return \$sqlValue;
     }
 ";
     }
@@ -2202,28 +2208,15 @@ abstract class " . $this->getClassname() . $extendingPeerClass . "
         $this->addDoCountJoin($script);
         $this->addDoSelectJoin($script);
 
-        $countFK = count($table->getForeignKeys());
-
-        $includeJoinAll = true;
-
         foreach ($this->getTable()->getForeignKeys() as $fk) {
             $tblFK = $table->getDatabase()->getTable($fk->getForeignTableName());
             $this->declareClassFromBuilder($this->getNewStubPeerBuilder($tblFK));
-            if ($tblFK->isForReferenceOnly()) {
-                $includeJoinAll = false;
-            }
         }
 
-        if ($includeJoinAll) {
-            if ($countFK > 0) {
-                $this->addDoCountJoinAll($script);
-                $this->addDoSelectJoinAll($script);
-            }
-            if ($countFK > 1) {
-                $this->addDoCountJoinAllExcept($script);
-                $this->addDoSelectJoinAllExcept($script);
-            }
-        }
+        // doSelectJoinAll*/doCountJoinAll* and their *Except* variants are no
+        // longer emitted: nothing calls them, and they were the bulk of the
+        // generated Peer size. The addDo*JoinAll*() builders are kept for
+        // subclasses that still want to opt in.
     }
 
     /**

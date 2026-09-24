@@ -51,7 +51,7 @@ class PHP5InterfaceBuilder extends ObjectBuilder
 
         $table = $this->getTable();
         $tableName = $table->getName();
-        $tableDesc = $table->getDescription();
+        $tableDesc = $this->docblockSafe($table->getDescription());
 
         $baseClassname = $this->getObjectBuilder()->getClassname();
 

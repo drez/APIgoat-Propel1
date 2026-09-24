@@ -54,7 +54,7 @@ class ExtensionQueryBuilder extends OMBuilder
         $table = $this->getTable();
         $this->declareClassFromBuilder($this->getQueryBuilder());
         $tableName = $table->getName();
-        $tableDesc = $table->getDescription();
+        $tableDesc = $this->docblockSafe($table->getDescription());
         $baseClassname = $this->getQueryBuilder()->getClassname();
 
         if ($this->getBuildProperty('addClassLevelComment')) {

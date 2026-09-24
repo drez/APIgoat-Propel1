@@ -94,6 +94,38 @@ class BasePeer
     }
 
     /**
+     * Groups the criteria keys by table like Criteria::getTablesColumns(), but
+     * sets apart the criteria that carry no table (raw clauses like
+     * where('1 = 0'), CUSTOM conditions without a column). Those must be
+     * ANDed into the WHERE of every real table's statement.
+     *
+     * @param Criteria $criteria
+     *
+     * @return array array(array tableName => array keys, array tablelessKeys)
+     */
+    protected static function splitTablesColumns(Criteria $criteria)
+    {
+        $tables = array();
+        $tableless = array();
+        foreach ($criteria->keys() as $key) {
+            $criterion = $criteria->getCriterion($key);
+            if ($criterion !== null && ($criterion->getTable() === null || $criterion->getTable() === '')) {
+                $tableless[] = $key;
+                continue;
+            }
+            $dotPos = strrpos($key, '.');
+            $tableName = ($dotPos === false) ? '' : substr($key, 0, $dotPos);
+            if ($tableName === '') {
+                $tableless[] = $key;
+                continue;
+            }
+            $tables[$tableName][] = $key;
+        }
+
+        return array($tables, $tableless);
+    }
+
+    /**
      * Method to perform deletes based on values and keys in a
      * Criteria.
      *
@@ -119,7 +151,13 @@ class BasePeer
 
         // Set up a list of required tables (one DELETE statement will
         // be executed per table)
-        $tables = $criteria->getTablesColumns();
+        // Table-less criteria (raw where('1 = 0'), CUSTOM clauses without a
+        // column) are ANDed into every real table's statement instead of
+        // being run as a broken statement against table ''.
+        list($tables, $tablelessColumns) = self::splitTablesColumns($criteria);
+        if (empty($tables) && !empty($tablelessColumns) && ($primaryTable = $criteria->getPrimaryTableName())) {
+            $tables = array($primaryTable => array());
+        }
         if (empty($tables)) {
             throw new PropelException("Cannot delete from an empty Criteria");
         }
@@ -134,7 +172,7 @@ class BasePeer
             try {
                 $sql = $db->getDeleteFromClause($criteria, $tableName);
 
-                foreach ($columns as $colName) {
+                foreach (array_merge($columns, $tablelessColumns) as $colName) {
                     $sb = "";
                     $criteria->getCriterion($colName)->appendPsTo($sb, $params);
                     $whereClause[] = $sb;
@@ -336,7 +374,8 @@ class BasePeer
         $dbMap = Propel::getDatabaseMap($selectCriteria->getDbName());
 
         // Get list of required tables, containing all columns
-        $tablesColumns = $selectCriteria->getTablesColumns();
+        // Table-less criteria are ANDed into every real table's WHERE (see doDelete()).
+        list($tablesColumns, $tablelessColumns) = self::splitTablesColumns($selectCriteria);
         if (empty($tablesColumns) && ($table = $selectCriteria->getPrimaryTableName())) {
             $tablesColumns = array($table => array());
         }
@@ -420,6 +459,7 @@ class BasePeer
                 $params = self::buildParams($updateTablesColumns[$tableName], $updateValues);
 
                 $sql = substr($sql, 0, -2);
+                $columns = array_merge($columns, $tablelessColumns);
                 if (!empty($columns)) {
                     foreach ($columns as $colName) {
                         $sb = "";

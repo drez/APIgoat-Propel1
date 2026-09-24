@@ -267,7 +267,7 @@ class MysqlSchemaParser extends BaseSchemaParser
 
         if ($desc){
             if(!$this->isUtf8($desc))
-                $desc = utf8_encode($desc);
+                $desc = mb_convert_encoding($desc, 'UTF-8', 'ISO-8859-1');
             $column->setDescription($desc);
         }
 

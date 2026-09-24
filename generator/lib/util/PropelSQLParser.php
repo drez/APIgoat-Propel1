@@ -169,12 +169,62 @@ class PropelSQLParser
         $this->setSQL(str_replace(array("\r\n", "\r"), "\n", $this->sql));
     }
 
+    /**
+     * Removes whole-line comments (//, -- or # as the first non-blank token of
+     * a line, together with any blank lines before it) and a c-style comment
+     * at the very start of the SQL.
+     *
+     * Equivalent to the historical regex pair
+     *   '#^\s*(//|--|\#).*(\n|$)#m' and '#^\s*' . '/\*.*?\*' . '/#s'
+     * except that a line starting inside a quoted string literal is never
+     * treated as a comment (the regex stripped such lines from the literal).
+     */
     public function stripSQLCommentLines()
     {
-        $this->setSQL(preg_replace(array(
-            '#^\s*(//|--|\#).*(\n|$)#m',    // //, --, or # style comments
-            '#^\s*/\*.*?\*/#s'              // c-style comments
-        ), '', $this->sql));
+        $sql = $this->sql;
+        $len = strlen($sql);
+        $out = '';
+        $pos = 0;
+        $isInString = false;
+        $stringQuotes = '';
+        $isAfterBackslash = false;
+        $atLineStart = true;
+        while ($pos < $len) {
+            if ($atLineStart && !$isInString) {
+                // mimic ^\s*(//|--|\#).*(\n|$) anchored at this line start
+                $ws = strspn($sql, " \t\n\x0B\f\r", $pos);
+                $p = $pos + $ws;
+                $two = substr($sql, $p, 2);
+                if ($two === '//' || $two === '--' || (isset($sql[$p]) && $sql[$p] === '#')) {
+                    $eol = strpos($sql, "\n", $p);
+                    // consume through the newline (or to the end); stay at a line start
+                    $pos = ($eol === false) ? $len : $eol + 1;
+                    continue;
+                }
+            }
+            $char = $sql[$pos];
+            if ($char === "\\") {
+                $isAfterBackslash = !$isAfterBackslash;
+            } else {
+                if ($char === "'" || $char === '"') {
+                    if ($isInString) {
+                        if ($char === $stringQuotes && !$isAfterBackslash) {
+                            $isInString = false;
+                        }
+                    } else {
+                        $stringQuotes = $char;
+                        $isInString = true;
+                    }
+                }
+                $isAfterBackslash = false;
+            }
+            $out .= $char;
+            $atLineStart = ($char === "\n");
+            $pos++;
+        }
+
+        // c-style comment: only ever anchored at the start of the SQL
+        $this->setSQL(preg_replace('#^\s*/\*.*?\*/#s', '', $out));
     }
 
     /**
@@ -212,7 +262,8 @@ class PropelSQLParser
             // check flags for strings or escaper
             switch ($char) {
                 case "\\":
-                    $isAfterBackslash = true;
+                    // toggle: "\\\\" is an escaped backslash, not an escape of the next quote
+                    $isAfterBackslash = !$isAfterBackslash;
                     break;
                 case "'":
                 case "\"":

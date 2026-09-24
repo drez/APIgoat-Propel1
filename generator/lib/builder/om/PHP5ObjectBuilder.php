@@ -200,7 +200,7 @@ class PHP5ObjectBuilder extends ObjectBuilder
 
         $table = $this->getTable();
         $tableName = $table->getName();
-        $tableDesc = $table->getDescription();
+        $tableDesc = $this->docblockSafe($table->getDescription());
         $parentClass = $this->getBehaviorContent('parentClass');
         if (null === $parentClass) {
             $parentClass = ClassTools::classname($this->getBaseClass());
@@ -314,6 +314,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
         $this->addColumnAccessorMethods($script);
         $this->addStrftimeCompatMethod($script);
         $this->addColumnMutatorMethods($script);
+        $this->addDecimalEqualsMethod($script);
 
         $this->addHasOnlyDefaultValues($script);
 
@@ -876,7 +877,7 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
     /**
      * @Field()
      * Get the [optionally formatted] temporal [$clo] column value.
-     * " . $col->getDescription();
+     * " . $this->docblockSafe($col->getDescription());
         if (!$useDateTime) {
             $script .= "
      * This accessor only only work with unix epoch dates.  Consider enabling the propel.useDateTimeClass
@@ -1088,6 +1089,81 @@ abstract class " . $this->getClassname() . " extends " . $parentClass . " ";
      *
      * @param string &$script The script will be modified in this method.
      */
+    /**
+     * Returns the scale of a DECIMAL/NUMERIC column as an int (0 for any
+     * other type or an unspecified/zero scale). Schemas may declare the scale
+     * with surrounding whitespace (scale=" 8"), hence the explicit cast.
+     *
+     * @param  Column $col
+     * @return int
+     */
+    protected function getDecimalCompareScale(Column $col)
+    {
+        if ($col->getType() !== PropelTypes::DECIMAL && $col->getType() !== PropelTypes::NUMERIC) {
+            return 0;
+        }
+
+        return max(0, (int) trim((string) $col->getScale()));
+    }
+
+    /**
+     * Adds the propelDecimalEquals() helper used by the DECIMAL/NUMERIC
+     * mutators, only when the table has such a column with a scale.
+     *
+     * @param string &$script The script will be modified in this method.
+     */
+    protected function addDecimalEqualsMethod(&$script)
+    {
+        $needed = false;
+        foreach ($this->getTable()->getColumns() as $col) {
+            if ($this->getDecimalCompareScale($col) > 0) {
+                $needed = true;
+                break;
+            }
+        }
+
+        if (!$needed) {
+            return;
+        }
+
+        $script .= <<<'EOT'
+
+    /**
+     * Whether two decimal strings hold exactly the same numeric value
+     * ('12.50' vs '12.5'), so re-setting a DECIMAL column to the value the
+     * database returned does not mark it modified.
+     *
+     * Only plain canonical decimals are compared (no exponent, sign other
+     * than '-', or whitespace); anything else is reported as different so
+     * the caller's strict comparison decides. The comparison scale is at
+     * least the column scale and never less than either operand's own
+     * fractional length, so a value that would round differently on
+     * storage is never mistaken for an unchanged one.
+     *
+     * @param  mixed $a
+     * @param  mixed $b
+     * @param  int   $scale The column scale.
+     * @return bool
+     */
+    protected static function propelDecimalEquals($a, $b, $scale)
+    {
+        if (!is_string($a) || !is_string($b) || !function_exists('bccomp')
+            || !preg_match('/^-?\d+(\.\d+)?$/D', $a) || !preg_match('/^-?\d+(\.\d+)?$/D', $b)) {
+            return false;
+        }
+        foreach (array($a, $b) as $operand) {
+            $dot = strpos($operand, '.');
+            if ($dot !== false) {
+                $scale = max($scale, strlen($operand) - $dot - 1);
+            }
+        }
+
+        return 0 === bccomp($a, $b, $scale);
+    }
+
+EOT;
+    }
+
     protected function addStrftimeCompatMethod(&$script)
     {
         $hasTemporalAccessor = false;
@@ -1299,7 +1375,7 @@ EOT;
     /**
      * @Field()
      * Get the [$clo] column value.
-     * " . $col->getDescription();
+     * " . $this->docblockSafe($col->getDescription());
         if ($col->isLazyLoad()) {
             $script .= "
      * @param PropelPDO \$con An optional PropelPDO connection to use for fetching this lazy-loaded column.";
@@ -1358,7 +1434,7 @@ EOT;
     /**
      * Test the presence of a value in the [$clo] array column value.
      * @param mixed \$value
-     * " . $col->getDescription();
+     * " . $this->docblockSafe($col->getDescription());
         if ($col->isLazyLoad()) {
             $script .= "
      * @param PropelPDO \$con An optional PropelPDO connection to use for fetching this lazy-loaded column.";
@@ -1413,7 +1489,7 @@ EOT;
     /**
      * @Field()
      * Get the [$clo] column value.
-     * " . $col->getDescription();
+     * " . $this->docblockSafe($col->getDescription());
         if ($col->isLazyLoad()) {
             $script .= "
      * @param PropelPDO \$con An optional PropelPDO connection to use for fetching this lazy-loaded column.";
@@ -1651,7 +1727,7 @@ EOT;
         $script .= "
     /**
      * Set the value of [$clo] column.
-     * " . $col->getDescription() . "
+     * " . $this->docblockSafe($col->getDescription()) . "
      * @param  " . $col->getPhpType() . " \$v new value
      * @return "   . $this->getObjectClassname() . " The current object (for fluent API support)
      */";
@@ -1889,7 +1965,7 @@ EOT;
         $script .= "
     /**
      * Sets the value of [$clo] column to a normalized version of the date/time value specified.
-     * " . $col->getDescription() . "
+     * " . $this->docblockSafe($col->getDescription()) . "
      * @param mixed \$v string, integer (timestamp), or DateTime value.
      *               Empty strings are treated as null.
      * @return " . $this->getObjectClassname() . " The current object (for fluent API support)
@@ -1960,7 +2036,7 @@ EOT;
     /**
      * Adds a value to the [$clo] array column value.
      * @param mixed \$value
-     * " . $col->getDescription();
+     * " . $this->docblockSafe($col->getDescription());
         if ($col->isLazyLoad()) {
             $script .= "
      * @param PropelPDO \$con An optional PropelPDO connection to use for fetching this lazy-loaded column.";
@@ -2003,7 +2079,7 @@ EOT;
     /**
      * Removes a value from the [$clo] array column value.
      * @param mixed \$value
-     * " . $col->getDescription();
+     * " . $this->docblockSafe($col->getDescription());
         if ($col->isLazyLoad()) {
             $script .= "
      * @param PropelPDO \$con An optional PropelPDO connection to use for fetching this lazy-loaded column.";
@@ -2050,7 +2126,7 @@ EOT;
         $script .= "
     /**
      * Set the value of [$clo] column.
-     * " . $col->getDescription() . "
+     * " . $this->docblockSafe($col->getDescription()) . "
      * @param  " .             $col->getPhpType() . " \$v new value
      * @return "               . $this->getObjectClassname() . " The current object (for fluent API support)
      * @throws PropelException - if the value is not accepted by this enum.
@@ -2060,11 +2136,15 @@ EOT;
 
         $script .= "
         if (\$v !== null) {
+            if (!is_scalar(\$v) || is_bool(\$v)) {
+                throw new PropelException(sprintf('Value of type \"%s\" is not accepted in this enumerated column', get_debug_type(\$v)));
+            }
             \$valueSet = " . $this->getPeerClassname() . "::getValueSet(" . $this->getColumnConstant($col) . ");
-            if (!in_array(\$v, \$valueSet)) {
+            \$key = array_search((string) \$v, \$valueSet, true);
+            if (\$key === false) {
                 throw new PropelException(sprintf('Value \"%s\" is not accepted in this enumerated column', \$v));
             }
-            \$v = array_search(\$v, \$valueSet);
+            \$v = \$key;
         }
 
         if (\$this->$clo !== \$v) {
@@ -2122,7 +2202,7 @@ EOT;
      *   * 1, '1', 'true',  'on',  and 'yes' are converted to boolean true
      *   * 0, '0', 'false', 'off', and 'no'  are converted to boolean false
      * Check on string values is case insensitive (so 'FaLsE' is seen as 'false').
-     * " . $col->getDescription() . "
+     * " . $this->docblockSafe($col->getDescription()) . "
      * @param boolean|integer|string \$v The new value
      * @return " . $this->getObjectClassname() . " The current object (for fluent API support)
      */";
@@ -2159,8 +2239,17 @@ EOT;
 ";
         }
 
+        $decimalScale = $this->getDecimalCompareScale($col);
+        if ($decimalScale > 0) {
+            // Numerically equal at the column scale ('12.5' vs the stored
+            // '12.50'): keep the stored value, don't mark the column modified.
+            $script .= "
+        if (\$this->$clo !== \$v && !self::propelDecimalEquals(\$this->$clo, \$v, $decimalScale)) {";
+        } else {
+            $script .= "
+        if (\$this->$clo !== \$v) {";
+        }
         $script .= "
-        if (\$this->$clo !== \$v) {
             \$this->$clo = \$v;
             \$this->modifiedColumns[] = " . $this->getColumnConstant($col) . ";
         }
@@ -2878,8 +2967,13 @@ EOT;
             if (PropelTypes::ENUM === $col->getType()) {
                 $script .= "
                 \$valueSet = " . $this->getPeerClassname() . "::getValueSet(" . $this->getColumnConstant($col) . ");
-                if (isset(\$valueSet[\$value])) {
-                    \$value = \$valueSet[\$value];
+                // Only an integer-like value that is not itself a valid label is
+                // an index; anything else (incl. non-scalars, rejected with a
+                // PropelException by the setter) is passed through as a label.
+                if ((is_int(\$value) || (is_string(\$value) && ctype_digit(\$value)))
+                    && !in_array((string) \$value, \$valueSet, true)
+                    && isset(\$valueSet[(int) \$value])) {
+                    \$value = \$valueSet[(int) \$value];
                 }";
             } elseif (PropelTypes::PHP_ARRAY === $col->getType()) {
                 $script .= "
@@ -3039,7 +3133,7 @@ EOT;
         }
 
         $script .= "
-        } catch (Exception \$e) {
+        } catch (\\Throwable \$e) {
             \$con->rollBack();
             throw \$e;
         }";
@@ -4874,6 +4968,19 @@ EOT;
     // ----------------------------------------------------------------
 
     /**
+     * Indents every non-blank line of an emitted code fragment by one level
+     * (4 spaces). Used to nest an already-generated method body inside a
+     * try/finally without rewriting each generator string.
+     *
+     * @param string $block
+     * @return string
+     */
+    protected function indentEmittedBlock($block)
+    {
+        return preg_replace('/^(?=[^\r\n])/m', '    ', $block);
+    }
+
+    /**
      * Adds the workhouse doSave() method.
      *
      * @param string &$script The script will be modified in this method.
@@ -4907,6 +5014,15 @@ EOT;
         \$affectedRows = 0; // initialize var to track total num of affected rows
         if (!\$this->alreadyInSave) {
             \$this->alreadyInSave = true;
+            try {";
+        // The body below is generated at the historical 12-space indent and
+        // re-indented one level once complete, so it sits inside the
+        // try/finally that guarantees the re-entrancy flag is always reset
+        // (an exception from doInsert/doUpdate or a related save() used to
+        // leave alreadyInSave = true, silently turning later save() calls
+        // into no-ops).
+        $bodyStart = strlen($script);
+        $script .= "
 ";
         if ($reloadOnInsert || $reloadOnUpdate) {
             $script .= "
@@ -5029,7 +5145,10 @@ EOT;
             }
 ";
         }
-        $script .= "
+        $script = substr($script, 0, $bodyStart) . $this->indentEmittedBlock(substr($script, $bodyStart));
+        $script .= "            } finally {
+                \$this->alreadyInSave = false;
+            }
         }
 
         return \$affectedRows;
@@ -5494,7 +5613,7 @@ EOT;
         }
 
         $script .= "
-        } catch (Exception \$e) {
+        } catch (\\Throwable \$e) {
             \$con->rollBack();
             throw \$e;
         }";
@@ -5609,6 +5728,10 @@ EOT;
             \$retval = null;
 
             \$failureMap = array();
+            try {";
+        // Body re-indented into the try/finally once generated (see addDoSave()).
+        $bodyStart = strlen($script);
+        $script .= "
 ";
         if (count($table->getForeignKeys()) != 0) {
             $script .= "
@@ -5662,9 +5785,10 @@ EOT;
             }
         } /* foreach getReferrers() */
 
-        $script .= "
-
-            \$this->alreadyInValidation = false;
+        $script = substr($script, 0, $bodyStart) . $this->indentEmittedBlock(substr($script, $bodyStart));
+        $script .= "            } finally {
+                \$this->alreadyInValidation = false;
+            }
         }
 
         return (!empty(\$failureMap) ? \$failureMap : true);
@@ -6043,16 +6167,20 @@ EOT;
                 return;
             }
         }
-        // no primary string column, falling back to default string format
+        // No primary string column: JSON of the column values. This used to be
+        // exportTo(DEFAULT_STRING_FORMAT), i.e. YAML through the bundled
+        // parser, which also walked every loaded related object -- a heavy,
+        // parser-dependent path for a cast that ends up in logs/string
+        // contexts. json_encode() is dependency-free and never throws here.
         $script .= "
     /**
      * return the string representation of this object
      *
-     * @return string
+     * @return string JSON of the column values (related objects excluded)
      */
     public function __toString()
     {
-        return (string) \$this->exportTo(" . $this->getPeerClassname() . "::DEFAULT_STRING_FORMAT);
+        return (string) json_encode(\$this->toArray(BasePeer::TYPE_PHPNAME, true, array()), JSON_UNESCAPED_UNICODE | JSON_PARTIAL_OUTPUT_ON_ERROR);
     }
 ";
     }

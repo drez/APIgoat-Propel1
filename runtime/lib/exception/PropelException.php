@@ -32,9 +32,9 @@ class PropelException extends Exception
      *
      * @return PropelException
      */
-    public function __construct($message = null, ?Exception $previous = null)
+    public function __construct($message = null, ?Throwable $previous = null)
     {
-        if ($previous === null && $message instanceof Exception) {
+        if ($previous === null && $message instanceof Throwable) {
             $previous = $message;
             $message = "";
         }

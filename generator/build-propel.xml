@@ -259,7 +259,7 @@
 
         <propel-sql-exec
                 autocommit="true"
-                onerror="continue"
+                onerror="abort"
                 sqldbmap="${propel.sql.dir}/sqldb.map"
                 srcDir="${propel.sql.dir}"
                 url="${propel.database.buildUrl}"

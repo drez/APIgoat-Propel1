@@ -13,6 +13,7 @@ require_once dirname(__FILE__) . '/../model/Column.php';
 require_once dirname(__FILE__) . '/../model/Table.php';
 require_once dirname(__FILE__) . '/../model/Domain.php';
 require_once dirname(__FILE__) . '/../model/PropelTypes.php';
+require_once dirname(__FILE__) . '/../exception/EngineException.php';
 
 /**
  * Default implementation for the Platform interface.
@@ -383,6 +384,17 @@ DROP TABLE " . $this->quoteIdentifier($table->getName()) . ";
                         $default .= $value;
                     }
                 } else {
+                    // A non-numeric default on a numeric column would be emitted
+                    // verbatim into the DDL (unquoted) - refuse it instead.
+                    if ($col->isNumericType() && !is_numeric($defaultValue->getValue())) {
+                        $table = $col->getTable();
+                        throw new EngineException(sprintf(
+                            'Invalid default value %s for numeric column %s.%s: a numeric type needs a numeric default (use defaultExpr for SQL expressions).',
+                            var_export($defaultValue->getValue(), true),
+                            $table ? $table->getName() : '?',
+                            $col->getName()
+                        ));
+                    }
                     $default .= $defaultValue->getValue();
                 }
             }
