@@ -50,7 +50,10 @@ class MatchValidator implements BasicValidator
     private function prepareRegexp($exp)
     {
         // remove surrounding '/' marks so that they don't get escaped in next step
-        if ($exp[0] !== '/' || $exp[strlen($exp) - 1] !== '/') {
+        // An empty expression has no first char to read ("Uninitialized string
+        // offset 0" on PHP 8); it becomes the match-everything '//' as before.
+        $exp = (string) $exp;
+        if ($exp === '' || $exp[0] !== '/' || $exp[strlen($exp) - 1] !== '/') {
             $exp = '/' . $exp . '/';
         }
 
